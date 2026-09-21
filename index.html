@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sadhanapada</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EBEEE9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EBEEE9; --paper:#F6F7F3; --ink:#212A2C; --ink2:#4F5B5C; --ink3:#77838A; --line:#D0D7D0; --line2:#DFE4DD; --fill:#E1E6DF;
+  --bark:#98826E; --lichen:#7B9382; --stone:#6B8593; --dusk:#8C7C9B; --amber:#C4913F;
+  --t-bark:rgba(152,130,110,.13); --t-lichen:rgba(123,147,130,.15); --t-stone:rgba(107,133,147,.14); --t-dusk:rgba(140,124,155,.14); --t-amber:rgba(196,145,63,.15);
+  --hi:#5E8A6C; --mid:#A98B3B; --lo:#8A7A9E; --warn:#A5605A;
+  --ease:cubic-bezier(.22,.7,.2,1);
+  --serif:'Marcellus',Georgia,'Times New Roman',serif;
+  --sans:'Mulish',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131A1B; --paper:#1A2223; --ink:#E7EBE6; --ink2:#AAB5B2; --ink3:#7E8B89; --line:#2C3637; --line2:#243030; --fill:#222C2D;
+    --bark:#B79F89; --lichen:#95AE9C; --stone:#8AA5B4; --dusk:#AC9DBA; --amber:#DBA657;
+    --t-bark:rgba(183,159,137,.14); --t-lichen:rgba(149,174,156,.15); --t-stone:rgba(138,165,180,.15); --t-dusk:rgba(172,157,186,.15); --t-amber:rgba(219,166,87,.15);
+    --hi:#8DBD9B; --mid:#D6B667; --lo:#B3A3C7; --warn:#D08A83;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131A1B; --paper:#1A2223; --ink:#E7EBE6; --ink2:#AAB5B2; --ink3:#7E8B89; --line:#2C3637; --line2:#243030; --fill:#222C2D;
+  --bark:#B79F89; --lichen:#95AE9C; --stone:#8AA5B4; --dusk:#AC9DBA; --amber:#DBA657;
+  --t-bark:rgba(183,159,137,.14); --t-lichen:rgba(149,174,156,.15); --t-stone:rgba(138,165,180,.15); --t-dusk:rgba(172,157,186,.15); --t-amber:rgba(219,166,87,.15);
+  --hi:#8DBD9B; --mid:#D6B667; --lo:#B3A3C7; --warn:#D08A83;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{background:var(--bg);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-tap-highlight-color:transparent;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3,h4,p{margin:0}
+svg{display:block}
+.ic svg,.ib svg,.mk svg,.tog svg,.opt svg,.ric svg,.sbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--stone);outline-offset:2px}
+
+/* ---------- hero ---------- */
+#hero{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;opacity:1;transition:opacity .8s ease;pointer-events:auto}
+#hero.out{opacity:0;pointer-events:none}
+#hero .hw{font:400 clamp(34px,9vw,52px)/1.2 var(--serif);letter-spacing:.01em;color:var(--ink);opacity:0;transform:translateY(6px);transition:opacity .6s ease,transform .8s var(--ease);text-align:center}
+#hero.in .hw{opacity:1;transform:none}
+#hero .hw span{display:inline-block;margin-left:.15em}
+
+/* ---------- layout ---------- */
+#app{max-width:560px;margin:0 auto;min-height:100vh}
+#view.enter{animation:vin .22s ease both}
+@keyframes vin{from{opacity:0}to{opacity:1}}
+.pg{padding:0 20px 90px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:10px 12px 8px}
+.top-in{display:flex;align-items:center;gap:6px;min-height:44px}
+.top h1{font:400 24px/1.2 var(--serif);flex:1;letter-spacing:.005em}
+.top-r{display:flex;gap:2px}
+.ib{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--ink2)}
+.ib:active{background:var(--fill)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 8px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--paper);color:var(--ink2);padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip.sm{padding:5px 11px;font-size:13px}
+
+.seg{display:flex;background:var(--fill);border-radius:999px;padding:4px;margin:8px 0 14px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:999px;font-size:14.5px;font-weight:600;color:var(--ink2)}
+.seg button.on{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+
+.dnav{display:flex;align-items:center;justify-content:space-between;margin:2px 0 6px}
+.dnav .dl{text-align:center}
+.dnav .dl b{display:block;font:400 22px/1.2 var(--serif)}
+.dnav .dl small{color:var(--ink3);font-size:13px}
+.dnav button:disabled{opacity:.25}
+
+.sv{font-size:12px;color:var(--ink3);min-height:18px;padding:3px 2px 0}
+.muted{color:var(--ink2)}
+.small{font-size:13.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-weight:700;font-size:14.5px;color:var(--ink);text-decoration:none}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.warn{color:var(--warn);border-color:var(--warn)}
+.btn.sm{padding:8px 14px;font-size:13.5px}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;font-size:13.5px}
+
+/* ---------- home ---------- */
+.home-top{padding:22px 20px 6px}
+.sky{width:100%;height:auto;display:block;overflow:visible}
+.sky .arc{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:2 5;stroke-linecap:round}
+.sky .hz{stroke:var(--line);stroke-width:1.2}
+.sky .sun{fill:var(--amber)}
+.sky .moon{fill:var(--paper);stroke:var(--ink3);stroke-width:1.4}
+.greet{margin-top:6px;color:var(--ink2);font-size:15px}
+.home-top h1{font:400 clamp(30px,8vw,38px)/1.15 var(--serif);margin-top:2px;letter-spacing:.005em}
+.rows{display:grid;gap:12px;margin:14px 0 18px}
+.row{--a:var(--bark);--t:var(--t-bark);display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:15px 18px;border-radius:22px;border:1px solid var(--line2);background:var(--t);transition:transform .15s var(--ease)}
+.row:active{transform:scale(.985)}
+.ric{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--a);background:var(--paper);border:1px solid var(--line2)}
+.rt{flex:1;min-width:0}
+.rt b{display:block;font:400 20px/1.25 var(--serif);letter-spacing:.005em}
+.rt small{display:block;color:var(--ink2);font-size:13.5px;line-height:1.35;margin-top:1px}
+.row .chev{color:var(--ink3);width:18px;flex:none}
+.row .chev svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.c-params{--a:var(--bark);--t:var(--t-bark)}
+.c-track{--a:var(--lichen);--t:var(--t-lichen)}
+.c-yoga{--a:var(--stone);--t:var(--t-stone)}
+.c-shakti{--a:var(--dusk);--t:var(--t-dusk)}
+.c-surya{--a:var(--amber);--t:var(--t-amber)}
+.minor{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.minor .row{padding:12px 14px;border-radius:18px;background:transparent;border:1px solid var(--line);gap:12px}
+.minor .ric{width:38px;height:38px}
+.minor .rt b{font-size:17px}
+.banner{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--paper);border:1px solid var(--line);margin:0 0 10px}
+.banner p{flex:1;font-size:14px;line-height:1.4}
+.banner p b{font-weight:700}
+.banner.warn{border-color:var(--warn)}
+
+/* ---------- questions ---------- */
+.q{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:20px 0;border-bottom:1px solid var(--line2)}
+.qb{min-width:0}
+.qt,.qs2{overflow-wrap:anywhere}
+.qn{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);color:var(--ink2);font-size:13px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.qt{font:400 19px/1.35 var(--serif);display:block;letter-spacing:.005em}
+.qs2{font:400 17px/1.4 var(--serif);display:block}
+.qs2 i{font-style:normal;color:var(--ink3);margin-right:2px}
+.qh{font-size:13.5px;line-height:1.5;color:var(--ink3);margin:5px 0 8px}
+.fld{margin-top:10px}
+.fld:first-child{margin-top:0}
+textarea,input[type=text],input[type=time]{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--paper);padding:12px 14px;font:400 16px/1.5 var(--sans);color:var(--ink);resize:none;outline:none;display:block;margin-top:8px}
+textarea:focus,input[type=text]:focus,input[type=time]:focus{border-color:var(--stone);box-shadow:0 0 0 3px var(--t-stone)}
+textarea{min-height:52px}
+::placeholder{color:var(--ink3);opacity:.8}
+.subh{font:400 21px/1.3 var(--serif);margin:26px 0 0;padding-top:18px;border-top:1px solid var(--line)}
+
+/* ---------- history ---------- */
+details.hg{border-bottom:1px solid var(--line2);padding:2px 0}
+details.hg summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px;cursor:pointer}
+details.hg summary::-webkit-details-marker{display:none}
+details.hg summary .hd{flex:1}
+details.hg summary b{display:block;font:400 18px/1.3 var(--serif)}
+details.hg summary small{color:var(--ink3);font-size:13px}
+details.hg summary .cv{transition:transform .2s;color:var(--ink3)}
+details.hg[open] summary .cv{transform:rotate(90deg)}
+.cv svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hbody{padding:0 2px 16px}
+.ha{margin-top:12px}
+.ha .hq{font-size:13.5px;color:var(--ink3);line-height:1.4}
+.ha .hx{white-space:pre-wrap;margin-top:2px;line-height:1.5}
+.ha .ht{font-size:12px;color:var(--ink3)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--t-bark);color:var(--ink2);margin-left:6px;vertical-align:2px}
+.tag.w{background:var(--t-dusk)}
+
+/* ---------- tracker: day ---------- */
+.trow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px;border-bottom:1px solid var(--line2)}
+.tl{min-width:0;flex:1}
+.trow.stack{flex-direction:column;align-items:flex-start;gap:10px}
+.trow.stack .ctl{width:100%}
+.trow.stack .opts{justify-content:flex-start;flex-wrap:nowrap}
+.trow.stack .opt{flex:1;max-width:60px}
+.tn{font:400 18px/1.3 var(--serif);overflow-wrap:anywhere}
+.tm{font-size:12.5px;color:var(--ink3)}
+.ctl{flex:none}
+.tog{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);color:var(--ink3);display:grid;place-items:center;transition:background .15s,border-color .15s}
+.tog:not(.on) svg{opacity:.3}
+.tog.on{background:var(--hi);border-color:var(--hi);color:#fff}
+.tog.star.on{background:transparent;border-color:var(--amber);color:var(--amber)}
+.opts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.opt{min-width:44px;height:44px;padding:0 8px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink2);display:grid;place-items:center;font:700 15px var(--sans);transition:background .15s}
+.opt.fill{background:var(--t-lichen);border-color:transparent}
+.opt.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.glyph{font-size:20px;line-height:1}
+.step{display:flex;align-items:center;gap:6px}
+.step b{min-width:38px;text-align:center;font:700 19px var(--sans)}
+.step .opt{min-width:40px;height:40px}
+.notes{margin-top:22px}
+.notes>label{font:400 19px var(--serif)}
+.empty{text-align:center;padding:36px 10px 10px}
+.empty h2{font:400 22px/1.3 var(--serif);margin-bottom:6px}
+.empty p{color:var(--ink2);font-size:14.5px}
+.sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0}
+
+/* ---------- tracker: week (paper) ---------- */
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 8px 14px;margin:6px -8px 0}
+.p-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:0 6px;margin-bottom:12px}
+.p-title{font:400 27px/1 var(--serif)}
+.p-range{font-size:13px;color:var(--ink2);text-align:right}
+.p-range u{text-decoration:none;border-bottom:1px solid var(--ink3);padding:0 6px}
+.pnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.g{display:grid;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.g>*{border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-height:42px;min-width:0;display:flex;align-items:center;justify-content:center}
+.g .gh{background:var(--fill);flex-direction:column;font-size:11.5px;line-height:1.15;color:var(--ink2);min-height:48px;padding:2px 0}
+.g .gh b{font-size:13px;font-weight:700;color:var(--ink)}
+.g button.gh{border-top:0;border-left:0;border-radius:0}
+.g .gh.today b{background:var(--ink);color:var(--bg);border-radius:50%;min-width:22px;height:22px;display:grid;place-items:center}
+.g .gh.lab{font:400 15px var(--serif);color:var(--ink)}
+.g .gn{justify-content:flex-start;padding:4px 8px;text-align:left;font-size:13.5px;line-height:1.25;overflow-wrap:anywhere}
+.g .gt{font-size:11.5px;color:var(--ink3);flex-direction:column;line-height:1.2;text-align:center}
+.cell{background:transparent;padding:0;border-top:0;border-left:0;border-radius:0;color:inherit}
+.cell:active{background:var(--fill)}
+.cell.fut{opacity:.35;pointer-events:none}
+.cell.sel{background:var(--t-lichen)}
+.mk{display:inline-grid;place-items:center;color:var(--ink2)}
+.mk svg{width:19px;height:19px}
+.mk.hi{color:var(--hi)}.mk.mid{color:var(--mid)}.mk.lo{color:var(--lo)}.mk.amber{color:var(--amber)}
+.mk.num{font:700 14px var(--sans)}
+.wnotes{margin-top:14px;padding:0 6px}
+.wnotes .wt{font:400 17px var(--serif)}
+.wn{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px;color:var(--ink2);line-height:1.4}
+.wn b{color:var(--ink);font-weight:700;margin-right:6px}
+.wl{height:30px;border-bottom:1px solid var(--line)}
+.hint{font-size:13px;color:var(--ink3);margin-top:12px;text-align:center}
+
+/* ---------- tracker: month ---------- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px 0;margin-top:12px}
+.cal .wd{text-align:center;font-size:12px;color:var(--ink3);font-weight:600}
+.cd{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px 0;color:inherit}
+.cd[disabled]{opacity:.3}
+.ring{--p:0deg;width:40px;height:40px;border-radius:50%;background:conic-gradient(var(--lichen) 0 var(--p),var(--line2) 0);position:relative;display:grid;place-items:center}
+.ring::before{content:'';position:absolute;inset:3.5px;border-radius:50%;background:var(--bg)}
+.ring span{position:relative;font-size:14px}
+.cd.today .ring span{font-weight:800}
+.cd.sel .ring::before{background:var(--fill)}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--bark);opacity:0}
+.dot.on{opacity:1}
+.legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:12.5px;color:var(--ink3);margin-top:16px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lichen);margin-right:6px}
+.legend i.b{background:var(--bark)}
+.stat{margin-top:18px;text-align:center;color:var(--ink2);font-size:14.5px}
+
+/* ---------- manage ---------- */
+.mrow{display:flex;align-items:center;gap:6px;padding:12px 0;border-bottom:1px solid var(--line2)}
+.mrow .mi{flex:1;min-width:0}
+.mrow .mi b{display:block;font:400 18px/1.3 var(--serif);overflow-wrap:anywhere}
+.mrow .mi small{color:var(--ink3);font-size:13px}
+.mrow .ib{width:38px;height:38px}
+.mrow .ib svg{width:19px;height:19px}
+.lab{font:700 13px var(--sans);color:var(--ink2);margin:16px 0 4px;display:block}
+.types{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.sopts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.sopt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--paper)}
+.sopt.on{border-color:var(--ink)}
+.sopt .pv{display:flex;gap:8px;color:var(--ink2)}
+.sopt .pv .mk svg,.sopt .pv svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sopt .pv .glyph{font-size:18px}
+
+/* ---------- sheet & toast ---------- */
+.sheet{position:fixed;inset:0;z-index:60;pointer-events:none;visibility:hidden}
+.sheet.open{pointer-events:auto;visibility:visible}
+.scrim{position:absolute;inset:0;background:rgba(18,24,25,.42);opacity:0;transition:opacity .25s}
+.sheet.open .scrim{opacity:1}
+.panel{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--paper);border-radius:26px 26px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom,0px));transform:translateY(104%);transition:transform .3s var(--ease);max-height:90%;overflow:auto;box-shadow:0 -1px 0 var(--line)}
+.sheet.open .panel{transform:none}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.panel h2{font:400 23px/1.25 var(--serif)}
+.panel .sub{color:var(--ink3);font-size:13.5px;margin-top:2px}
+.panel .ctl-big{margin:20px 0 6px;display:flex;justify-content:center}
+.panel .ctl-big .opts{justify-content:center}
+.panel .ctl-big .opt{min-width:52px;height:52px}
+.panel .ctl-big .step .opt{min-width:48px;height:48px}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;transition:opacity .25s,transform .25s var(--ease);z-index:80;pointer-events:none;max-width:88%;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- practice pages ---------- */
+.search{position:relative;margin:4px 0 6px}
+.search input{margin:0;padding-left:42px;border-radius:999px}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:19px;height:19px;fill:none;stroke:var(--ink3);stroke-width:1.6;stroke-linecap:round}
+.psec{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 120px);padding-top:26px}
+.psec>h2{font:400 24px/1.25 var(--serif);margin-bottom:6px}
+.psec>.psub{color:var(--ink3);font-size:13.5px;margin-bottom:8px}
+.ph{font:700 13.5px var(--sans);color:var(--ink2);margin:16px 0 6px}
+.pp{margin:8px 0;color:var(--ink2);line-height:1.6}
+.pnote{margin:10px 0;padding:12px 14px;border-radius:14px;background:var(--t-amber);font-size:14.5px;line-height:1.55}
+.pul,.pol{margin:8px 0;padding-left:0;list-style:none;display:grid;gap:8px}
+.pul li{position:relative;padding-left:20px;line-height:1.55}
+.pul li::before{content:'';position:absolute;left:5px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--ink3)}
+.pol{counter-reset:o}
+.pol li{position:relative;padding-left:32px;line-height:1.55;counter-increment:o}
+.pol li::before{content:counter(o);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink2)}
+.pitem{display:grid;grid-template-columns:30px 1fr auto;gap:2px 10px;padding:12px 0;border-bottom:1px solid var(--line2);align-items:baseline}
+.pitem .pn{color:var(--ink3);font-size:13px;font-weight:700}
+.pitem .pnm{font-size:16.5px;font-weight:700;line-height:1.35}
+.pitem .pnm i{font-weight:400;color:var(--ink2)}
+.pitem .prp{font-size:13.5px;color:var(--ink2);text-align:right;line-height:1.35;max-width:120px}
+.pitem .psb{grid-column:2/4;font-size:14px;color:var(--ink2);display:flex;justify-content:space-between;gap:10px;line-height:1.4}
+.pitem .pno{grid-column:2/4;font-size:13.5px;color:var(--ink3)}
+.pitem.opt2 .pnm{font-weight:500;color:var(--ink2)}
+.pgroup{margin:6px 0 0;padding:10px 0 2px;border-bottom:1px solid var(--line2)}
+.pgroup .pgh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pgroup .pgh b{font:400 18px/1.3 var(--serif)}
+.pgroup .pgh span{font-size:13.5px;color:var(--ink2)}
+.pgroup .pitem:last-child{border-bottom:0}
+.pcard{padding:14px 16px;border-radius:16px;background:var(--t-dusk);margin:10px 0}
+.pcard .pch{font:400 18px/1.3 var(--serif);margin-bottom:3px}
+.pcard p{font-size:14.5px;line-height:1.55;color:var(--ink2)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tags span{font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line2);color:var(--ink2)}
+.pattern{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.pattern div{background:var(--t-dusk);border-radius:14px;padding:10px 6px;text-align:center;font-size:12px;line-height:1.3;color:var(--ink2)}
+.pattern b{display:block;font:400 26px/1.1 var(--serif);color:var(--ink)}
+.tbl{width:100%;border-collapse:collapse;margin:8px 0;font-size:14.5px}
+.tbl th{text-align:left;font-size:12.5px;color:var(--ink3);font-weight:700;padding:6px 6px 6px 0;border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 6px 9px 0;border-bottom:1px solid var(--line2);vertical-align:top;line-height:1.4}
+.tbl.num td:first-child{color:var(--ink3);font-weight:700;width:30px}
+.tbl tr.sepr td{background:var(--t-amber);color:var(--ink2);font-size:13.5px;text-align:center;padding:8px}
+.tbl small{display:block;color:var(--ink3);font-size:12.5px}
+.tbl .e{color:var(--ink);font-weight:700}
+.stepsl{display:grid;gap:0;margin:8px 0;padding:0;list-style:none;counter-reset:s}
+.stepsl li{display:flex;justify-content:space-between;gap:12px;padding:11px 0 11px 34px;border-bottom:1px solid var(--line2);position:relative;counter-increment:s;line-height:1.4}
+.stepsl li::before{content:counter(s);position:absolute;left:0;top:11px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink2)}
+.stepsl li span:first-child{font-weight:700}
+.stepsl li span:last-child{color:var(--ink2);font-size:14px;text-align:right}
+.nomatch{text-align:center;color:var(--ink3);padding:30px 0}
+
+/* ---------- reviews ---------- */
+.rlist{display:grid;gap:10px;margin:8px 0 18px}
+.rrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:var(--paper)}
+.rrow b{display:block;font:400 18px/1.3 var(--serif)}
+.rrow small{color:var(--ink3);font-size:13px}
+.rrow .rt2{flex:1}
+.pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--t-lichen);color:var(--ink2)}
+.pill.new{background:var(--amber);color:#20180a}
+.pill.live{background:var(--fill)}
+.rv h2.big{font:400 28px/1.2 var(--serif);margin:6px 0 2px}
+.rv .lead{color:var(--ink2);font-size:14.5px;margin-bottom:6px}
+.rb{margin-top:24px}
+.rb h3{display:flex;align-items:center;gap:10px;font:400 21px/1.3 var(--serif);margin-bottom:6px}
+.rb h3 .dotc{width:10px;height:10px;border-radius:50%}
+.rb ul{margin:0;padding:0;list-style:none;display:grid;gap:0}
+.rb li{padding:11px 0;border-bottom:1px solid var(--line2);font-size:15px;line-height:1.5}
+.rb li b{font-weight:800}
+.rb .none{color:var(--ink3);font-size:14px;padding:6px 0}
+.b-well .dotc{background:var(--hi)}.b-improved .dotc{background:var(--lichen)}.b-declined .dotc{background:var(--lo)}.b-wrong .dotc{background:var(--warn)}.b-focus .dotc{background:var(--amber)}
+.ntbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.ntbl th{text-align:left;font-size:12.5px;color:var(--ink3);font-weight:700;padding:6px 6px 6px 0;border-bottom:1px solid var(--line)}
+.ntbl td{padding:9px 6px 9px 0;border-bottom:1px solid var(--line2);vertical-align:top}
+.ntbl td.up{color:var(--hi);font-weight:700}.ntbl td.dn{color:var(--warn);font-weight:700}
+.words{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.words span{padding:5px 12px;border-radius:999px;background:var(--t-bark);font-size:14px}
+.words span em{font-style:normal;color:var(--ink3);margin-left:4px;font-size:12.5px}
+.foot{margin-top:26px;font-size:13px;color:var(--ink3);line-height:1.5}
+
+/* ---------- backup ---------- */
+.card{padding:16px 18px;border-radius:18px;border:1px solid var(--line);background:var(--paper);margin:10px 0}
+.card h3{font:400 19px/1.3 var(--serif);margin-bottom:4px}
+.card p{font-size:14.5px;color:var(--ink2);line-height:1.55}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--ink2)}
+.kv span:last-child{font-weight:700;text-align:right}
+pre.jr{white-space:pre-wrap;word-break:break-word;font:400 13px/1.55 ui-monospace,Menlo,Consolas,monospace;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;margin:8px 0;color:var(--ink)}
+.hiddenfile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  #hero{transition:opacity .3s}
+}
+</style>
+</head>
+<body>
+<div id="hero" aria-hidden="true"><div class="hw">Namaskaram <span>🙏</span></div></div>
+<div id="app"><div id="view"></div></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="filein" class="hiddenfile" accept=".txt,text/plain" tabindex="-1">
+<script>
+'use strict';
+/* ============ utilities ============ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const pk=k=>{const a=k.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
+const addD=(k,n)=>{const d=pk(k);d.setDate(d.getDate()+n);return dkey(d)};
+const today=()=>dkey(new Date());
+const wkStart=k=>{const d=pk(k);d.setDate(d.getDate()-((d.getDay()+6)%7));return dkey(d)};
+const diffD=(a,b)=>Math.round((pk(b)-pk(a))/864e5);
+const range=(a,b)=>{const o=[];let k=a,g=0;while(k<=b&&g++<4000){o.push(k);k=addD(k,1)}return o};
+const monStart=k=>k.slice(0,7)+'-01';
+const monEnd=k=>{const d=pk(k);return dkey(new Date(d.getFullYear(),d.getMonth()+1,0))};
+const addM=(k,n)=>{const d=pk(k);return dkey(new Date(d.getFullYear(),d.getMonth()+n,1))};
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONS=MON.map(m=>m.slice(0,3));
+const DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS=DAY.map(d=>d.slice(0,3));
+const fmtLong=k=>{const d=pk(k),y=d.getFullYear()===new Date().getFullYear();return DAY[d.getDay()]+', '+d.getDate()+' '+MON[d.getMonth()]+(y?'':' '+d.getFullYear())};
+const fmtShort=k=>{const d=pk(k);return d.getDate()+' '+MONS[d.getMonth()]};
+const fmtFull=k=>{const d=pk(k);return d.getDate()+' '+MONS[d.getMonth()]+' '+d.getFullYear()};
+const fmtRange=(a,b)=>{const x=pk(a),y=pk(b);const yr=y.getFullYear()!==new Date().getFullYear()?' '+y.getFullYear():'';return (x.getMonth()===y.getMonth()?x.getDate():x.getDate()+' '+MONS[x.getMonth()])+' – '+y.getDate()+' '+MONS[y.getMonth()]+yr};
+const fmtT=iso=>{const d=new Date(iso);if(isNaN(d))return '';let h=d.getHours();const m=pad(d.getMinutes());const ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+ap};
+const fmtDT=iso=>{const d=new Date(iso);return isNaN(d)?'':d.getDate()+' '+MONS[d.getMonth()]+' '+d.getFullYear()+', '+fmtT(iso)};
+const fmtHM=s=>{if(!s)return '';const a=s.split(':').map(Number);let h=a[0];const ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+pad(a[1]||0)+' '+ap};
+const plural=(n,w,ws)=>n+' '+(n===1?w:(ws||w+'s'));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const uid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ============ icons ============ */
+const S=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+const EYES='<circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/>';
+const IC={
+  back:S('<path d="M15 5l-7 7 7 7"/>'),
+  chev:S('<path d="M9 5l7 7-7 7"/>'),
+  plus:S('<path d="M12 5v14M5 12h14"/>'),
+  x:S('<path d="M6 6l12 12M18 6L6 18"/>'),
+  check:S('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  tilde:S('<path d="M5 12c2-3 4-3 7 0s5 3 7 0"/>'),
+  star:S('<path d="M12 4l2.5 5.2 5.7.8-4.1 4 1 5.7L12 17l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>'),
+  starF:'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:currentColor;stroke-width:1.2;stroke-linejoin:round"><path d="M12 4l2.5 5.2 5.7.8-4.1 4 1 5.7L12 17l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></svg>',
+  face_h:S('<circle cx="12" cy="12" r="8.5"/><path d="M8.5 14c1 1.7 2.2 2.4 3.5 2.4s2.5-.7 3.5-2.4"/>'+EYES),
+  face_n:S('<circle cx="12" cy="12" r="8.5"/><path d="M9 15h6"/>'+EYES),
+  face_s:S('<circle cx="12" cy="12" r="8.5"/><path d="M8.5 16.4c1-1.7 2.2-2.4 3.5-2.4s2.5.7 3.5 2.4"/>'+EYES),
+  cFull:S('<circle cx="12" cy="12" r="7.5" fill="currentColor"/>'),
+  cHalf:S('<circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 0 0 15z" fill="currentColor"/>'),
+  cEmpty:S('<circle cx="12" cy="12" r="7.5"/>'),
+  sun:S('<circle cx="12" cy="12" r="3.8"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6L18 18M6 18l1.4-1.4M16.6 7.4L18 6"/>'),
+  cloud:S('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>'),
+  drop:S('<path d="M12 4c3 4 5.500 6.800 5.500 9.800a5.500 5.500 0 0 1-11 0C6.500 10.800 9 8 12 4z"/>'),
+  leaf:S('<path d="M5 19c0-8 5-14 15-14 0 9-5 14-13 14"/><path d="M5 19c2-4 5-7 9-9"/>'),
+  grid:S('<rect x="4" y="5" width="16" height="15" rx="2.500"/><path d="M4 10h16M9 5v15M14.500 10v10"/>'),
+  mountain:S('<path d="M3 19l6.500-11 4 6.500L16 11l5 8z"/>'),
+  wave:S('<path d="M3 8c3-3 6 3 9 0s6 3 9 0M3 13c3-3 6 3 9 0s6 3 9 0M3 18c3-3 6 3 9 0s6 3 9 0"/>'),
+  chart:S('<path d="M4 18l5-6 4 3 7-9"/><path d="M4 20.500h16"/>'),
+  save:S('<path d="M12 4v11M7.500 10.500L12 15l4.500-4.500M5 19.500h14"/>'),
+  sliders:S('<path d="M5 8h9M18 8h1M5 16h1M10 16h9"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/>'),
+  up:S('<path d="M12 19V6M6.500 11.500L12 6l5.500 5.500"/>'),
+  down:S('<path d="M12 5v13M6.500 12.500L12 18l5.500-5.500"/>'),
+  trash:S('<path d="M5 8h14M9.500 8V5.500h5V8M7 8l1 11h8l1-11"/>'),
+  edit:S('<path d="M5 19l1-4L16 5l3 3L9 18z"/>'),
+  copy:S('<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h1"/>'),
+  eye:S('<path d="M2.500 12S6 6 12 6s9.500 6 9.500 6-3.500 6-9.500 6-9.500-6-9.500-6z"/><circle cx="12" cy="12" r="2.500"/>'),
+  upload:S('<path d="M12 16V5M7.500 9.500L12 5l4.500 4.500M5 19.500h14"/>'),
+  bell:S('<path d="M6 16.500V11a6 6 0 0 1 12 0v5.500l1.500 1.500h-15zM10 20.500a2 2 0 0 0 4 0"/>'),
+  search:S('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>')
+};
+
+/* ============ questions (from the Parameters PDF) ============ */
+const DQ=[
+  {id:'d1',n:'1',s:'Inner Engineering practice',q:'How many times a day am I doing the Inner Engineering Crash Course?'},
+  {id:'d2',n:'2',s:'Conscious eating',q:'Am I eating more consciously?',h:'Am I aware of the number of times I am chewing, the texture of the food, the quantity I am consuming? Am I eating with gratitude, keeping aside likes and dislikes?'},
+  {id:'d3',n:'3',s:'Reacting or responding',q:'Am I reacting or responding to situations and people around me?',h:'How many times am I getting angry, impatient, irritated or annoyed? When I get angry or irritated, how many times am I seeing that all I experience is my making?'},
+  {id:'d4',n:'4',s:'Becoming more willing',q:'Am I becoming more willing?',subs:[
+    {id:'d4a',n:'a',s:'First reaction to instructions',q:'When I receive instructions of any kind, what is my first feeling or thought?'},
+    {id:'d4b',n:'b',s:'Offering despite body and mind',q:'In spite of whatever is happening in my body or mind, am I able to keep myself aside, at least for a few moments, and do whatever is needed with a sense of offering?'},
+    {id:'d4c',n:'c',s:'Same when unobserved',q:'If someone was watching me, would I do things in the same way or differently?',h:'For example, if someone reminds me to keep my phone aside at night, I will. Otherwise I will not.'}]},
+  {id:'d5',n:'5',s:'Vibrant or dull',q:'Is my system more vibrant or dull?',h:'Am I feeling energetic all day? How easy or not? Am I finding it easy to wake up in the morning?'},
+  {id:'d6',n:'6',s:'Vak Shuddhi',q:'How well am I able to maintain Vak Shuddhi?',h:'Am I moving towards using fewer words when I speak? Am I conscious of the words I am choosing to use and with what intention? Am I able to maintain silence after 9:30 pm?'},
+  {id:'d7',n:'7',s:'Focus',q:'Am I able to stay more focused on whatever I am doing throughout the day?',h:'Is that focus starting to become more effortless, or do I have to remind myself to stay focused?'}
+];
+const WQ=[
+  {id:'w1',n:'1',s:'Experience of Sadhana',q:'How is my experience of Sadhana?',h:'Am I able to sit still with more ease, for longer periods of time? Stronger? More still? When doing Hatha yoga or Kriya? During or after Pradakshina?'},
+  {id:'w2',n:'2',s:'Bhakti Sadhana',q:'Am I able to make Bhakti Sadhana a part of my life?',subs:[
+    {id:'w2a',n:'a',s:'Seeing something higher',q:'At least a few times a day, am I able to see something or someone as higher than myself?'},
+    {id:'w2b',n:'b',s:'Seeing the best in people',q:'Am I seeing the best in people?'}]},
+  {id:'w3',n:'3',s:'Commitment to growth',q:'Is my commitment towards my growth unwavering?',h:'Even on days when I am feeling unwell, am I able to use the situation for my growth?'},
+  {id:'w4',n:'4',s:'Joy and love',q:'Irrespective of the situation, am I experiencing an effortless sense of joy and love?',h:'Am I smiling naturally?'},
+  {id:'w5',n:'5',s:'Part of the problem or the solution',q:'How often am I part of the problem, and how often am I part of the solution?'},
+  {id:'w6',n:'6',s:'Balance and stillness',q:'Am I feeling more balance and stillness within, irrespective of how my body and mind are, or how situations around me are?'}
+];
+const SQ=[
+  {id:'s1',n:'1',s:'Seva intensity',q:'What is my current level of intensity in seva?'},
+  {id:'s2',n:'2',s:'What holds me back in seva',q:'What is holding me back from being more intense in seva?'},
+  {id:'s3',n:'3',s:'How to enhance seva',q:'What can I do to enhance my intensity?'}
+];
+const flatQ=list=>{const o=[];list.forEach(q=>{if(q.subs)q.subs.forEach(s=>o.push(Object.assign({},s,{num:q.n+s.n,parent:q.q})));else o.push(Object.assign({},q,{num:q.n}))});return o};
+const DQF=flatQ(DQ), WQF=flatQ(WQ), SQF=SQ.map(q=>Object.assign({},q,{num:'Seva '+q.n}));
+const QBYID={};DQF.concat(WQF,SQF).forEach(q=>QBYID[q.id]=q);
+
+/* ============ tracker definitions ============ */
+const TYPES={check:'Tick',mood:'Mood',star:'Star',rating:'Rating',symbol:'Symbols',count:'Count'};
+const TYPEDESC={check:'Done or not done',mood:'Happy, normal or sad',star:'Award a star',rating:'A score from 1 to 5',symbol:'Choose your own symbols',count:'A number, like times or minutes'};
+const MOODL={h:'Happy',n:'Normal',s:'Sad'};
+const SYMSETS={
+  circles:{name:'Full, half, empty',opts:[{i:'cFull',l:'Fully',s:1},{i:'cHalf',l:'Partly',s:.5},{i:'cEmpty',l:'Not yet',s:0}]},
+  weather:{name:'Sun, cloud, rain',opts:[{i:'sun',l:'Sunny',s:1},{i:'cloud',l:'Cloudy',s:.5},{i:'drop',l:'Rainy',s:0}]},
+  yesno:{name:'Yes, maybe, no',opts:[{i:'check',l:'Yes',s:1},{i:'tilde',l:'Maybe',s:.5},{i:'x',l:'No',s:0}]}
+};
+const SUGGEST=[
+  {name:'Meditation',type:'check'},
+  {name:'Kriya',type:'star'},
+  {name:'Mood',type:'mood'},
+  {name:'Energy',type:'rating'},
+  {name:'Practice',type:'symbol',set:'circles'},
+  {name:'Times I reacted',type:'count',dir:'less'}
+];
+const lvl=s=>s>=.75?'hi':s>=.35?'mid':'lo';
+const symHTML=o=>o.i&&IC[o.i]?IC[o.i]:'<span class="glyph">'+esc(o.g||'')+'</span>';
+const mark=(p,v)=>{
+  if(v===undefined||v===null)return '';
+  switch(p.type){
+    case 'check':return v?'<span class="mk hi">'+IC.check+'</span>':'';
+    case 'star':return v?'<span class="mk amber">'+IC.starF+'</span>':'';
+    case 'mood':return '<span class="mk '+(v==='h'?'hi':v==='n'?'mid':'lo')+'">'+IC['face_'+v]+'</span>';
+    case 'rating':return '<span class="mk num '+lvl((v-1)/4)+'">'+v+'</span>';
+    case 'symbol':{const o=(p.sym||[])[v];return o?'<span class="mk '+lvl(o.s)+'">'+symHTML(o)+'</span>':''}
+    case 'count':return '<span class="mk num">'+v+'</span>';
+  }
+  return '';
+};
+
+/* ============ storage (local first) ============ */
+const KEY='sadhanapada.v1';
+let storageOK=true, db=null, saveT=null;
+const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},meta:{lastExport:null,dirty:false,seen:{}}});
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{}},o.meta||{});return o}
+  }catch(e){storageOK=false}
+  return blank();
+}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));storageOK=true}catch(e){storageOK=false}}
+function touch(){db.meta.dirty=true;clearTimeout(saveT);saveT=setTimeout(persist,250)}
+function flush(){clearTimeout(saveT);persist()}
+const nowISO=()=>new Date().toISOString();
+const dayOf=(k,make)=>{let d=db.days[k];if(!d&&make)d=db.days[k]={t:{},a:{},n:null,u:null};return d};
+function hasData(k){
+  const d=db.days[k];if(!d)return false;
+  return Object.keys(d.t||{}).length>0||Object.values(d.a||{}).some(x=>x&&x.t&&x.t.trim())||!!(d.n&&d.n.t&&d.n.t.trim());
+}
+function cleanup(k){if(db.days[k]&&!hasData(k))delete db.days[k]}
+function setT(k,pid,val){
+  const d=dayOf(k,true);d.t=d.t||{};
+  if(val===null||val===undefined)delete d.t[pid];else d.t[pid]=val;
+  d.u=nowISO();cleanup(k);touch();
+}
+function setAns(scope,key,qid,text){
+  let rec;
+  if(scope==='d')rec=dayOf(key,true);else rec=db.weeks[key]=db.weeks[key]||{a:{},u:null};
+  rec.a=rec.a||{};const prev=rec.a[qid];
+  if(!text.trim())delete rec.a[qid];
+  else if(!prev||prev.t!==text)rec.a[qid]={t:text,at:nowISO()};
+  rec.u=nowISO();
+  if(scope==='d')cleanup(key);else if(!Object.keys(rec.a).length)delete db.weeks[key];
+  touch();
+}
+function setNote(k,text){
+  const d=dayOf(k,true);
+  d.n=text.trim()?{t:text,at:nowISO()}:null;
+  d.u=nowISO();cleanup(k);touch();
+}
+const P=id=>db.params.find(p=>p.id===id);
+const liveParams=()=>db.params.filter(p=>!p.archived);
+const answeredD=(k,q)=>{const a=(db.days[k]||{}).a||{};const ok=x=>a[x.id]&&a[x.id].t&&a[x.id].t.trim();return q.subs?q.subs.some(ok):!!ok(q)};
+
+/* ============ practice reference content ============ */
+const EMPTY_STOMACH='To be practiced on an empty stomach: 4 hours after a full meal, 2.5 hours after a snack, 1.5 hours after a beverage (except water).';
+const A=(n,name,tr,reps,extra)=>Object.assign({n,name,tr,reps},extra||{});
+const PRACTICE={};
+
+PRACTICE.yoga={
+  title:'Yogasana',sub:'31 postures with cycles',
+  secs:[
+    {id:'prep',t:'Preparation',b:[{k:'asanas',items:[A('1','Nadi Vibhajan','','3 cycles')]}]},
+    {id:'stand',t:'Standing',b:[{k:'asanas',items:[
+      A('2','Padahastasana','Hand to foot','3 cycles'),
+      A('3','Konasana','Angle','',{subs:[['Preparation','3 cycles'],['Asana','3 cycles']]}),
+      A('4','Trikonasana','Triangle','3 cycles'),
+      A('5','Vrikshasana','Tree','1 cycle'),
+      A('6','Shavasana','Corpse','if needed',{opt:1})]}]},
+    {id:'lying',t:'Lying down',b:[{k:'asanas',items:[
+      A('7','Ekapada Utthanpadasana','Endeavor to rise','3 cycles',{subs:[['Ekapada: single leg, 90° and 45°',''],['Dwipada Utthanpadasana: both legs, 90° and 45°','']]}),
+      A('8','Shalabhasana','Locust','',{subs:[['Preparation','1 cycle'],['Asana','3 cycles']]}),
+      A('9','Makarasana','Crocodile','',{note:'In between postures 8 to 11, if needed'}),
+      A('10','Naukasana','Boat','',{subs:[['Preparation','1 cycle'],['Asana','1 cycle (3 cycles if time permits)']]}),
+      A('11','Bhujangasana','Snake','3 cycles'),
+      A('12','Dhanurasana','Bow','1 cycle',{note:'3 cycles if time permits'}),
+      A('','Shavasana','Corpse','if needed',{opt:1})]}]},
+    {id:'sit',t:'Sitting and inverted',b:[
+      {k:'asanas',items:[
+        A('13','Paschimottanasana','Head to heels stretch','3 cycles'),
+        A('14','Janu Shirasasana','Head to knee posture','1 cycle',{note:'3 cycles if time permits'}),
+        A('15','Matsyendrasana','Snail','1 cycle')]},
+      {k:'group',t:'Sarvangasana series',tr:'All parts',reps:'1 cycle',items:[
+        A('16','Sarvangasana','Shoulder stand',''),
+        A('17','Halasana','Plough',''),
+        A('18','Karnapeethasana','Knees to ears',''),
+        A('19','Vipareetakarani','Inverted posture','',{note:'Rapid breathing'}),
+        A('20','Ardhamatsyasana','Fish','',{note:'Rapid breathing'})]},
+      {k:'group',t:'Spinal twist variations',tr:'',reps:'1 cycle each',items:[
+        A('21','Twisting variation 1','','1 cycle'),
+        A('22','Twisting variation 2','','1 cycle'),
+        A('23','Twisting variation 3','','1 cycle'),
+        A('','Shavasana','Corpse','if needed',{opt:1})]}]},
+    {id:'bal',t:'Balancing',b:[{k:'asanas',items:[
+      A('24','Mandukasana','Toad','1 cycle'),
+      A('25','Mayurasana','Peacock: men only','',{subs:[['Preparation','1 cycle'],['Asana','1 cycle']]}),
+      A('','Balasana','Child’s posture','',{opt:1})]}]},
+    {id:'rest',t:'Resting posture',b:[{k:'asanas',items:[A('26','Sushanti Meditation','Perfect calm, 61-point relaxation','3 cycles')]}]},
+    {id:'band',t:'Bandhas',b:[
+      {k:'group',t:'Preparation',tr:'',reps:'',items:[
+        A('27','Patangasana','','2 minutes'),
+        A('28','Shishupalasana','','2 minutes per leg')]},
+      {k:'asanas',items:[
+        A('29','Yoga Mudra','Yogic seal','3 cycles'),
+        A('30','Lolasana','Swinging','3 cycles'),
+        A('31','Uddyana Bandha','Diaphragm lock','3 cycles')]}]},
+    {id:'notes',t:'Notes',b:[{k:'ul',items:[
+      'When holding asanas for less than 30 seconds, do 3 cycles of each asana (or 1 cycle where indicated).',
+      'If holding asanas for 30 seconds or more, you can do 1 cycle of each asana.',
+      'Empty stomach must be maintained: 4 hours after a full meal, 2.5 hours after a snack, 1.5 hours after a beverage (except water).']}]}
+  ]
+};
+
+const SK_ROWS=[
+  ['1','Samastithi','Equanimous state','Shoonyaka (Emptiness)'],
+  ['2','Namaskar','','3'],
+  ['3','Urdhvasana','Elevated','5'],
+  ['4','Padahastasana','Hand to foot','7'],
+  ['5','Ashva Sanchalana','Equestrian','3'],
+  ['6','Parvathasana','Mountain','5'],
+  ['7','Sashtanga','With 8 parts of body','7'],
+  ['8','Bhujangasana','Snake','Rapid breathing for the duration of 3'],
+  ['9','Parvathasana','','5'],
+  ['10','Ashva Sanchalana','','7'],
+  ['11','Padahastasana','','3'],
+  ['12','Ashva Sanchalana','','5'],
+  ['13','Parvathasana','','7'],
+  ['14','Sashtanga','','3'],
+  ['15','Bhujangasana','','Rapid breathing for the duration of 5'],
+  ['16','Parvathasana','','7'],
+  ['17','Ashva Sanchalana','','3'],
+  ['18','Padahastasana','','5'],
+  ['19','Urdhvasana','','7'],
+  ['20','Namaskar','','3'],
+  ['21','Samastithi','','Kumbhaka (Fullness)']
+];
+const SS_ROWS=[
+  ['1','Samastithi','Equanimous state'],['2','Namaskar',''],['3','Urdhvasana','Elevated'],['4','Padahastasana','Hand to foot'],
+  ['5','Ashva Sanchalana','Equestrian'],['6','Parvathasana','Mountain'],['7','Sashtanga','With 8 parts of body'],['8','Bhujangasana','Snake'],['9','Parvathasana',''],
+  'Jump on emptiness. If you cannot jump, do Ashva Sanchalana.',
+  ['10','Padahastasana',''],['11','Ashva Sanchalana',''],['12','Parvathasana',''],['13','Sashtanga',''],['14','Bhujangasana',''],['15','Parvathasana',''],
+  'Jump on emptiness. If you cannot jump, do Ashva Sanchalana.',
+  ['16','Padahastasana',''],['17','Urdhvasana',''],['18','Namaskar','']
+];
+const cellName=(name,tr)=>'<span class="e">'+esc(name)+'</span>'+(tr?'<small>'+esc(tr)+'</small>':'');
+
+PRACTICE.surya={
+  title:'Surya Kriya',sub:'Surya Kriya and Surya Shakti',
+  tabs:[
+    {id:'kriya',t:'Surya Kriya',secs:[
+      {id:'k-order',t:'Practice order',b:[{k:'steps',items:[
+        ['Patangasana','2 minutes'],['Shishupalasana','2 minutes per leg'],['Nadi Vibhajan','3 cycles'],
+        ['Surya Kriya','1, 3, 6, 7, 9, 11, 12 cycles'],['Sushanti Meditation (perfect calm, 61-point relaxation)','3 cycles'],['Uddyana Bandha (diaphragm lock)','3 cycles']]}]},
+      {id:'k-asana',t:'Asanas and breaths',b:[{k:'table',num:1,head:['#','Asana','Breaths'],rows:SK_ROWS.map(r=>[r[0],cellName(r[1],r[2]),esc(r[3])])}]},
+      {id:'k-note',t:'Note',b:[{k:'note',t:EMPTY_STOMACH}]}
+    ]},
+    {id:'shakti',t:'Surya Shakti',secs:[
+      {id:'s-order',t:'Practice order',b:[{k:'steps',items:[
+        ['Patangasana','2 minutes'],['Shishupalasana','2 minutes per leg'],['Nadi Vibhajan','3 cycles'],
+        ['Surya Shakti','3 slow cycles, then add 3, 6, 12, 21, 24, 33, 48, 64, 84, 96, 108 cycles'],
+        ['Shavasana (or Sushanti Meditation)','10 minutes'],['Uddyana Bandha (diaphragm lock)','3 cycles']]}]},
+      {id:'s-asana',t:'Asana names',b:[{k:'table',num:1,head:['#','Asana'],rows:SS_ROWS.map(r=>typeof r==='string'?r:[r[0],cellName(r[1],r[2])])}]},
+      {id:'s-note',t:'Note',b:[{k:'note',t:EMPTY_STOMACH}]}
+    ]}
+  ]
+};
+
+const MK=(h,t,notes)=>({k:'card',h,t,notes:notes||[]});
+const DHAUTI='Holding the Chin Mudra, blow out hot gases through your mouth with a quick swish and bend. Before your head touches down, all air should be blown out. Hold for 2 seconds, lift your head and body a little, then inhale.';
+PRACTICE.shakti={
+  title:'Shakti Chalana',sub:'Complete cycle in Vajrasana',
+  secs:[
+    {id:'begin',t:'Before you begin',b:[
+      {k:'note',t:'The complete cycle is to be done in Vajrasana.'},
+      {k:'h',t:'Vajrasana: always check 4 points'},
+      {k:'ol',items:['Big toes should be touching.','Chest out a little.','Spine straight.','4 fingers gap between your knees from the front.']},
+      {k:'p',t:'For Chin, Chinmaya, Adi and Merudanda mudras, only the mudra up to the wrist should be tight. The rest of the arm stays relaxed.'}]},
+    {id:'naadh',t:'1. Naadh Kriya',b:[
+      MK('Chin Mudra','Sound “Aaaa” for complete exhalation. Open your mouth completely.',['3 cycles','Vibration in the lower navel area']),
+      MK('Chinmaya Mudra','Sound “Uuuu” for complete exhalation. Make your lips into an “O” shape.',['3 cycles','Vibration in the chest area']),
+      MK('Adi Mudra','Sound “Maaaaa” for complete exhalation. Close your mouth.',['3 cycles','Vibration from the pit of the throat to the nose and face']),
+      MK('Dhauti Kriya',DHAUTI)]},
+    {id:'mudra',t:'2. Mudra Kriya',b:[
+      {k:'h',t:'Breathing pattern 4-2-5-2'},
+      {k:'pattern',steps:[['4','Inhale completely'],['2','Hold (Kumbhaka)'],['5','Exhale from the pit of the throat with a sound'],['2','Hold in Shoonyaka']]},
+      MK('Chin Mudra','Breathe in the pattern above.',['7 cycles','Vibration in the lower navel area']),
+      MK('Chinmaya Mudra','Breathe in the pattern above.',['7 cycles','Vibration in the chest area']),
+      MK('Adi Mudra','Breathe in the pattern above.',['7 cycles','Vibration in the pit of the throat and face area']),
+      MK('Merudanda Mudra','Breathe in the pattern above.',['7 cycles','Vibration in the back area']),
+      MK('Dhauti Kriya',DHAUTI)]},
+    {id:'sukh',t:'3. Sukh Kriya',b:[
+      {k:'p',t:'For 3 to 4 minutes.'},
+      {k:'ul',items:['If the nasal passages are not clear, do the jogging and hand-swinging variation 20 to 25 times.','After 3 to 4 minutes, check if your breathing is balanced. If not, do this kriya for 2 more minutes.']}]},
+    {id:'mahat',t:'4. Mahat Prana Kriya',b:[
+      {k:'ul',items:[
+        'Hold Poorn Mudra: tuck your thumbs into the palms and close them. The ring fingers of both hands should be touching at all times with no gap between the fingers. Palms face upwards, chest in, shoulders out, hands stretched completely.',
+        'Do Kapalbhati 15 to 20 times with a 1.5 second gap in between. Use the base of your stomach to exhale. The sound should come from the pit of the throat, with a gentle blow from the base of the stomach.',
+        'After 15 to 20 kapalbhatis, take 2 seconds to retighten the mudra.',
+        'Inhale fully, take your head back and do the throat (neck) lock. If you lock the throat properly, the diaphragm lock happens automatically. Then consciously hold the anal lock.',
+        'When you feel like exhaling: release the neck lock and exhale fully from the pit of the throat with the sound. Release the mudra, and only then release the anal lock.',
+        'Total 3 cycles to be done.',
+        'Do Dhauti Kriya after completing the 3 cycles of Mahat Prana Kriya.']}]},
+    {id:'shwan',t:'5. Shwan (dog panting) Kriya',b:[{k:'ul',items:[
+      'Loosely place your hands on the waist.','Inhale completely through the nose and stretch out your tongue.','Do dog panting with the tongue out 12 to 16 times.','Bandhas: just like Shambhavi Mahamudra.']}]},
+    {id:'kaka',t:'6. Kaka (crow) Kriya',b:[{k:'ul',items:[
+      'Loosely place your hands on the waist.','Inhale completely through the nose and stretch out your tongue.','With the tongue out, make a bird-call sound 12 to 16 times, exhaling from the bottom part of the stomach.','Bandhas: just like Shambhavi Mahamudra.']}]},
+    {id:'naga',t:'7. Naga (snake) Kriya',b:[
+      {k:'ul',items:['Hold Chin Mudra.','Inhale in 8, 6 and 4 parts, with a gap of a total of 9 counts in every part.','After the last part of the inhalation, release the Chin Mudra from both hands.','Close the right nostril with the right thumb and exhale completely from the pit of the throat with a sound.']},
+      {k:'note',t:'After completing the cycles of Shwan, Kaka and Naga Kriya, do Dhauti Kriya.'}]},
+    {id:'panch',t:'8. Panch Sahit Kriya',b:[
+      {k:'ul',items:['Hold the required mudra from the table below, focus on the particular organ and breathe with the respective counts.','Do 3 cycles for each organ.']},
+      {k:'table',head:['Organ','Mudra','Counts'],rows:[
+        [cellName('Lung, lower lobe','Focus on the diaphragm'),'Chin Mudra','4-16-8-4'],
+        [cellName('Lung, middle lobe','Focus on the chest'),'Chinmaya Mudra','4-16-8-4'],
+        [cellName('Lung, upper lobe','Focus on the shoulders'),'Adi Mudra','4-16-8-4'],
+        [cellName('Liver','Focus on the area below the ribs on the right side'),'Chin Mudra','4-4-16-8'],
+        [cellName('Stomach','Focus on the area below the ribs on the left side'),'Chin Mudra','8-4-4-16'],
+        [cellName('Kidneys','Focus on the lower back area on both sides'),'Chin Mudra','16-8-4-4'],
+        [cellName('Heart','Focus on the little left side of the chest'),'Chinmaya Mudra','4-16-8']
+      ]},
+      {k:'note',t:'After completing the cycles of Panch Sahit Kriya, do Dhauti Kriya. Then come out of Vajrasana properly.'}]},
+    {id:'shoonya',t:'Shoonya Meditation',b:[
+      {k:'h',t:'4 conditions for Shoonya Meditation'},
+      {k:'ul',items:['Somewhat tired','Somewhat hungry','No expectations from meditation','No reaction to external and internal situations']},
+      {k:'p',t:'Sit, on a chair or on the ground, with your legs crossed, right ankle above left, and right palm above left palm, like Brahma Mudra.'},
+      {k:'note',t:'During meditation, thoughts will come. Do not resist the thoughts, do not pursue a thought and do not create a thought.'}]}
+  ]
+};
+
+/* ============ analysis engine (data only, no guesses) ============ */
+const Insights={list:[],register(fn){this.list.push(fn)}};
+const STOP=new Set(('about above after again also always among another because been before being between both cannot could didn does doing done down during each either even ever every from further have having here however into just like made make many might more most much must myself only other over please really said same should since some still such than that their them then there these they this those through today under until very want was were what when where whether which while will with within without would your yours yourself feel felt feeling days time times getting'
+).split(' '));
+
+function periodOf(kind,start){
+  if(kind==='w'){return {kind,start,end:addD(start,6),ps:addD(start,-7),pe:addD(start,-1)}}
+  const pe=addD(start,-1);
+  return {kind,start,end:monEnd(start),ps:monStart(pe),pe};
+}
+function firstKey(){
+  const a=Object.keys(db.days).filter(hasData).sort()[0],b=Object.keys(db.weeks).sort()[0];
+  return [a,b].filter(Boolean).sort()[0]||null;
+}
+function ctxFor(kind,start){
+  const P0=periodOf(kind,start),t=today(),f=firstKey()||t;
+  const clip=(a,b)=>{const s=a<f?f:a,e=b>t?t:b;return s>e?[]:range(s,e)};
+  const keys=clip(P0.start,P0.end),pKeys=clip(P0.ps,P0.pe);
+  const both=keys.concat(pKeys);
+  const params=db.params.filter(p=>!p.archived||both.some(k=>db.days[k]&&db.days[k].t&&db.days[k].t[p.id]!==undefined));
+  return {P:P0,kind,keys,pKeys,active:keys.filter(hasData),pActive:pKeys.filter(hasData),params};
+}
+function score(p,v){
+  switch(p.type){
+    case 'check':case 'star':return v?1:0;
+    case 'mood':return {h:1,n:.5,s:0}[v];
+    case 'rating':return (v-1)/4;
+    case 'symbol':return p.sym&&p.sym[v]?p.sym[v].s:undefined;
+  }
+}
+function pstats(p,keys){
+  const rec=[],dist={};
+  keys=p.c?keys.filter(k=>k>=p.c||(((db.days[k]||{}).t||{})[p.id]!==undefined)):keys;
+  keys.forEach(k=>{
+    const v=((db.days[k]||{}).t||{})[p.id];
+    if(p.type==='check'||p.type==='star'){rec.push({k,v:v?1:0,s:v?1:0});return}
+    if(v===undefined||v===null)return;
+    const s=p.type==='count'?v:score(p,v);
+    if(s===undefined||s===null)return;
+    rec.push({k,v,s});dist[v]=(dist[v]||0)+1;
+  });
+  const n=rec.length;
+  return {rec,n,dist,days:keys.length,mean:n?avg(rec.map(x=>x.s)):null,sum:(p.type==='check'||p.type==='star'||p.type==='count')?rec.reduce((a,x)=>a+x.v,0):0};
+}
+function levelText(p,m){
+  switch(p.type){
+    case 'rating':return (1+4*m).toFixed(1)+' of 5';
+    case 'mood':return (1+2*m).toFixed(1)+' of 3';
+    case 'count':return m.toFixed(1)+(p.unit?' '+p.unit:'');
+    default:return Math.round(m*100)+'%';
+  }
+}
+function deltaText(p,b,a){
+  const d=a-b,sg=d>0?'+':d<0?'−':'';
+  switch(p.type){
+    case 'rating':return sg+Math.abs(d*4).toFixed(1);
+    case 'mood':return sg+Math.abs(d*2).toFixed(1);
+    case 'count':return sg+Math.abs(d).toFixed(1);
+    default:return sg+Math.abs(Math.round(d*100))+' pts';
+  }
+}
+function describe(p,st){
+  const n=st.n,days=st.days;
+  switch(p.type){
+    case 'check':return 'was ticked on '+st.sum+' of '+days+' recorded days ('+Math.round(st.mean*100)+'%).';
+    case 'star':return 'earned a star on '+st.sum+' of '+days+' recorded days ('+Math.round(st.mean*100)+'%).';
+    case 'mood':return 'was happy on '+(st.dist.h||0)+', normal on '+(st.dist.n||0)+' and sad on '+(st.dist.s||0)+' of '+n+' recorded days.';
+    case 'rating':return 'averaged '+(1+4*st.mean).toFixed(1)+' out of 5 across '+plural(n,'day')+'.';
+    case 'symbol':return 'was recorded as '+(p.sym||[]).map((o,i)=>st.dist[i]?(o.l||o.g||'')+' ('+st.dist[i]+')':null).filter(Boolean).join(', ')+' across '+plural(n,'day')+'.';
+    case 'count':return 'averaged '+st.mean.toFixed(1)+(p.unit?' '+p.unit:'')+' per recorded day across '+plural(n,'day')+'.';
+  }
+  return '';
+}
+
+/* --- analyzer: tracker parameters --- */
+Insights.register(function trackerAnalyzer(c){
+  const out=[],per=c.kind==='w'?'week':'month',prevLab=c.kind==='w'?'last week':'last month';
+  c.params.forEach(p=>{
+    const cur=pstats(p,c.active);if(!cur.n)return;
+    const prv=pstats(p,c.pActive),isC=p.type==='count',name=p.name;
+    let streakHit=false;
+    if(p.type==='check'||p.type==='star'){
+      let s=0;for(let i=cur.rec.length-1;i>=0&&cur.rec[i].s===0;i--)s++;
+      if(s>=3){streakHit=true;out.push({b:'wrong',w:1.5+s/10,n:name,t:'was not '+(p.type==='check'?'ticked':'starred')+' on the last '+s+' recorded days ('+cur.sum+' of '+cur.days+' in total).'})}
+    }
+    if(!isC&&cur.days>=3){
+      if(cur.mean>=.7&&cur.n>=3)out.push({b:'well',w:1+cur.mean,n:name,t:describe(p,cur)});
+      else if(cur.mean<=.4&&!streakHit)out.push({b:'wrong',w:2-cur.mean,n:name,t:describe(p,cur)});
+    }
+    if(!isC&&p.type!=='check'&&p.type!=='star'&&cur.days>=4&&cur.n/cur.days<.5)
+      out.push({b:'wrong',w:1.2,n:name,t:'was recorded on only '+cur.n+' of '+cur.days+' recorded days.'});
+    let before=null,after=null,basis='';
+    if(prv.n>=2&&c.pActive.length>=3&&cur.n>=2){before=prv.mean;after=cur.mean;basis='compared with '+prevLab}
+    else if(cur.n>=4){const h=Math.floor(cur.n/2);before=avg(cur.rec.slice(0,h).map(x=>x.s));after=avg(cur.rec.slice(h).map(x=>x.s));basis='between the first and second half of this '+per}
+    if(before!==null){
+      const delta=after-before;let better=null;
+      if(isC){if(p.dir==='more'||p.dir==='less'){const th=Math.max(.5,.2*Math.abs(before));if(Math.abs(delta)>=th)better=(p.dir==='more')===(delta>0)}}
+      else if(Math.abs(delta)>=.12)better=delta>0;
+      if(better!==null)out.push({b:better?'improved':'declined',w:1+Math.abs(delta),n:name,t:(better?'improved':'declined')+' from '+levelText(p,before)+' to '+levelText(p,after)+', '+basis+'.'});
+    }
+  });
+  return out;
+});
+
+/* --- analyzer: daily reflection (parameters) --- */
+Insights.register(function reflectAnalyzer(c){
+  const out=[],den=c.keys.length,pden=c.pKeys.length;
+  if(den<3)return out;
+  const ansDays=keys=>keys.filter(k=>DQ.some(q=>answeredD(k,q))).length;
+  const cur=ansDays(c.keys),prv=ansDays(c.pKeys),rate=cur/den;
+  if(rate>=.7)out.push({b:'well',w:1+rate,n:'Daily reflection',t:'was answered on '+cur+' of '+den+' days.'});
+  else if(rate<=.4)out.push({b:'wrong',w:2-rate,n:'Daily reflection',t:'was answered on '+(cur===0?'none':'only '+cur)+' of '+den+' days.'});
+  if(pden>=3){
+    const d=rate-prv/pden;
+    if(d>=.2)out.push({b:'improved',w:1+d,n:'Daily reflection',t:'was answered on '+cur+' of '+den+' days, up from '+prv+' of '+pden+' in the previous '+(c.kind==='w'?'week':'month')+'.'});
+    if(d<=-.2)out.push({b:'declined',w:1+Math.abs(d),n:'Daily reflection',t:'was answered on '+cur+' of '+den+' days, down from '+prv+' of '+pden+' in the previous '+(c.kind==='w'?'week':'month')+'.'});
+  }
+  if(cur>=2){
+    DQ.map(q=>({q,x:c.keys.filter(k=>answeredD(k,q)).length})).filter(r=>r.x/den<=.25).sort((a,b)=>a.x-b.x).slice(0,3)
+      .forEach(r=>out.push({b:'wrong',w:1.1,n:r.q.s||('Question '+r.q.n),t:'was answered on '+(r.x===0?'none':'only '+r.x)+' of '+den+' days.'}));
+  }
+  return out;
+});
+
+/* --- analyzer: weekly reflection --- */
+Insights.register(function weeklyAnalyzer(c){
+  const out=[],t=today(),total=WQF.length+SQF.length;
+  const cnt=w=>{const r=db.weeks[w];return r?Object.values(r.a||{}).filter(x=>x&&x.t&&x.t.trim()).length:0};
+  if(c.kind==='w'){
+    const n=cnt(c.P.start),done=c.P.end<t;
+    if(n>=Math.ceil(total*.7))out.push({b:'well',w:1.5,n:'Weekly reflection',t:'was answered, '+n+' of '+total+' questions.'});
+    else if(n===0&&done)out.push({b:'wrong',w:1.4,n:'Weekly reflection',t:'was not answered this week.'});
+    return out;
+  }
+  const mondays=range(c.P.start,c.P.end).filter(k=>pk(k).getDay()===1&&addD(k,6)<t);
+  if(mondays.length>=2){
+    const got=mondays.filter(w=>cnt(w)>0).length,r=got/mondays.length;
+    if(r>=.7)out.push({b:'well',w:1.3,n:'Weekly reflection',t:'was answered for '+got+' of '+mondays.length+' weeks.'});
+    else if(r<=.4)out.push({b:'wrong',w:1.3,n:'Weekly reflection',t:'was answered for '+(got===0?'none':'only '+got)+' of '+mondays.length+' weeks.'});
+  }
+  return out;
+});
+
+/* --- analyzer: weekday pattern (monthly, needs enough days) --- */
+Insights.register(function weekdayAnalyzer(c){
+  if(c.kind!=='m'||c.active.length<14)return [];
+  const ps=liveParams().filter(p=>p.type!=='count');if(!ps.length)return [];
+  const by=[[],[],[],[],[],[],[]];
+  c.active.forEach(k=>{
+    const sc=[];
+    ps.forEach(p=>{const v=((db.days[k]||{}).t||{})[p.id];
+      if(p.type==='check'||p.type==='star')sc.push(v?1:0);
+      else if(v!==undefined){const s=score(p,v);if(s!=null)sc.push(s)}});
+    if(sc.length)by[pk(k).getDay()].push(avg(sc));
+  });
+  const rows=by.map((a,i)=>({i,n:a.length,m:avg(a)})).filter(r=>r.n>=2);
+  if(rows.length<4)return [];
+  const all=avg(rows.map(r=>r.m)),lo=rows.reduce((a,b)=>b.m<a.m?b:a),hi=rows.reduce((a,b)=>b.m>a.m?b:a);
+  if(hi.m-lo.m<.2)return [];
+  return [
+    {b:'well',w:1,pl:1,n:DAY[hi.i]+'s',t:'were your strongest days, averaging '+Math.round(hi.m*100)+'% of the best score.'},
+    {b:'wrong',w:1,pl:1,n:DAY[lo.i]+'s',t:'were your lowest days, averaging '+Math.round(lo.m*100)+'% against '+Math.round(all*100)+'% overall.'}
+  ];
+});
+
+/* --- themes from your own words (counts only, no interpretation) --- */
+function words(texts){
+  const m=new Map();
+  texts.forEach(t=>{(t.toLowerCase().match(/[\p{L}\p{M}']+/gu)||[]).forEach(w=>{
+    w=w.replace(/^'+|'+$/g,'');if(w.length<4||STOP.has(w))return;m.set(w,(m.get(w)||0)+1)})});
+  return m;
+}
+function textsOf(keys){const o=[];keys.forEach(k=>{const d=db.days[k];if(d&&d.a)Object.values(d.a).forEach(x=>x&&x.t&&o.push(x.t))});return o}
+function weekTexts(a,b){const o=[];Object.keys(db.weeks).forEach(w=>{if(w>=a&&w<=b)Object.values(db.weeks[w].a||{}).forEach(x=>x&&x.t&&o.push(x.t))});return o}
+function themesFor(c){
+  const cur=words(textsOf(c.keys).concat(weekTexts(c.P.start,c.P.end)));
+  const pt=textsOf(c.pKeys).concat(weekTexts(c.P.ps,c.P.pe)),prv=words(pt);
+  return Array.from(cur.entries()).filter(e=>e[1]>=2).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,10)
+    .map(e=>{const pv=prv.get(e[0])||0;return {w:e[0],n:e[1],prev:pv,rising:pt.length>0&&e[1]>=3&&e[1]>=2*pv&&e[1]-pv>=2}});
+}
+function numbersFor(c){
+  return c.params.map(p=>{
+    const cur=pstats(p,c.active);if(!cur.n)return null;
+    const prv=pstats(p,c.pActive);
+    let now;
+    switch(p.type){
+      case 'check':case 'star':now=cur.sum+' of '+cur.days+' days';break;
+      case 'count':now=levelText(p,cur.mean)+' avg, total '+cur.sum;break;
+      default:now=levelText(p,cur.mean)+' avg'}
+    let before='–',chg='',cls='';
+    if(prv.n>=2){
+      before=levelText(p,prv.mean);
+      const d=cur.mean-prv.mean;
+      if(Math.abs(d)>=(p.type==='count'?.05:.02)){
+        chg=(d>0?'▲ ':'▼ ')+deltaText(p,prv.mean,cur.mean);
+        if(p.type==='count'){if(p.dir==='more')cls=d>0?'up':'dn';else if(p.dir==='less')cls=d<0?'up':'dn'}
+        else cls=d>0?'up':'dn';
+      }else chg='steady';
+    }
+    return {name:p.name,now,before,chg,cls};
+  }).filter(Boolean);
+}
+function computeReview(kind,start){
+  const c=ctxFor(kind,start);
+  const out={well:[],improved:[],declined:[],wrong:[],focus:[]};
+  const enough=c.active.length>=2;
+  if(enough)Insights.list.forEach(fn=>{try{(fn(c)||[]).forEach(f=>out[f.b].push(f))}catch(e){console.error(e)}});
+  ['well','improved','declined','wrong'].forEach(b=>out[b].sort((a,z)=>(z.w||0)-(a.w||0)));
+  const seen={},wellNames=new Set(out.well.map(f=>f.n));
+  out.wrong.concat(out.declined.filter(f=>!wellNames.has(f.n))).sort((a,z)=>(z.w||0)-(a.w||0)).forEach(f=>{
+    if(out.focus.length<3&&!seen[f.n]){seen[f.n]=1;out.focus.push({n:f.n,t:f.t,pl:f.pl})}});
+  if(enough&&c.active.length<c.keys.length/2)
+    out.focus.push({n:'Recording',t:'Only '+c.active.length+' of '+c.keys.length+' days have any entry, so patterns above are based on limited data.',rec:1});
+  return {kind,start,end:c.P.end,c,out,enough,numbers:enough?numbersFor(c):[],themes:enough?themesFor(c):[]};
+}
+const REVIEW_AT=[21,30];
+function reviewReady(end){const t=pk(end);t.setHours(REVIEW_AT[0],REVIEW_AT[1],0,0);return new Date()>=t}
+function reviewStarts(kind){
+  const keys=Object.keys(db.days).filter(hasData).sort(),wk=Object.keys(db.weeks).sort();
+  const cand=[keys[0],wk[0]].filter(Boolean).sort();
+  if(!cand.length)return [];
+  const first=cand[0],cur=today(),out=[];
+  if(kind==='w'){for(let s=wkStart(first);s<=wkStart(cur);s=addD(s,7))out.push(s)}
+  else{for(let s=monStart(first);s<=monStart(cur);s=addM(s,1))out.push(s)}
+  return out.reverse();
+}
+const reviewTitle=(kind,start)=>kind==='w'?fmtRange(start,addD(start,6)):MON[pk(start).getMonth()]+' '+pk(start).getFullYear();
+function unseenReview(){
+  for(const kind of ['w','m']){
+    for(const s of reviewStarts(kind)){
+      const end=periodOf(kind,s).end;
+      if(!reviewReady(end))continue;
+      if(db.meta.seen[kind+':'+s])break;
+      if(ctxFor(kind,s).active.length>=2)return {kind,start:s};
+      break;
+    }
+  }
+  return null;
+}
+
+/* ============ TXT journal (one file, always the full record) ============ */
+const RULE='═'.repeat(46),RULE2='─'.repeat(46);
+const ind=(t,p)=>t.split('\n').map(l=>p+l).join('\n');
+function plainVal(p,v){
+  if(v===undefined||v===null)return '-';
+  switch(p.type){
+    case 'check':return v?'Done':'-';
+    case 'star':return v?'Starred':'-';
+    case 'mood':return MOODL[v]||'-';
+    case 'rating':return v+' / 5';
+    case 'symbol':{const o=(p.sym||[])[v];return o?(o.l&&o.g?o.g+' '+o.l:(o.l||o.g||'-')):'-'}
+    case 'count':return v+(p.unit?' '+p.unit:'');
+  }
+  return '-';
+}
+const dots=(a,b)=>a+' '+'.'.repeat(Math.max(3,34-a.length))+' '+b;
+function dayText(k){
+  const d=db.days[k],D=pk(k),L=[];
+  L.push(RULE,DAY[D.getDay()].toUpperCase()+', '+D.getDate()+' '+MON[D.getMonth()].toUpperCase()+' '+D.getFullYear(),RULE);
+  const ps=db.params.filter(p=>!p.archived||(d.t||{})[p.id]!==undefined);
+  if(ps.length&&Object.keys(d.t||{}).length){
+    L.push('TRACKER');
+    ps.forEach(p=>L.push('  '+dots(p.name+(p.time?' ('+fmtHM(p.time)+')':''),plainVal(p,(d.t||{})[p.id]))));
+  }
+  if(d.n&&d.n.t&&d.n.t.trim()){L.push('','NOTES  (saved '+fmtT(d.n.at)+')',ind(d.n.t,'  '))}
+  const ans=DQF.filter(q=>d.a&&d.a[q.id]&&d.a[q.id].t.trim());
+  if(ans.length){
+    L.push('','DAILY PARAMETERS');
+    ans.forEach(q=>{const a=d.a[q.id];L.push('  '+q.num+'. '+q.q+'  (saved '+fmtT(a.at)+')',ind(a.t,'     '))});
+  }
+  return L.join('\n');
+}
+function weekText(w){
+  const r=db.weeks[w],L=[RULE2,'WEEKLY PARAMETERS  '+fmtRange(w,addD(w,6))+' '+pk(addD(w,6)).getFullYear(),RULE2];
+  const got=q=>r.a&&r.a[q.id]&&r.a[q.id].t.trim();
+  WQF.filter(got).forEach(q=>L.push('  '+q.num+'. '+q.q+'  (saved '+fmtT(r.a[q.id].at)+')',ind(r.a[q.id].t,'     ')));
+  const sv=SQF.filter(got);
+  if(sv.length){L.push('','  SEVA');sv.forEach(q=>L.push('  '+q.n+'. '+q.q+'  (saved '+fmtT(r.a[q.id].at)+')',ind(r.a[q.id].t,'     ')))}
+  return L.join('\n');
+}
+function reviewText(rv){
+  const L=[RULE2,(rv.kind==='w'?'WEEKLY':'MONTHLY')+' REVIEW  '+reviewTitle(rv.kind,rv.start),RULE2];
+  L.push('Days with entries: '+rv.c.active.length+' of '+rv.c.keys.length);
+  const sec=(label,arr,fn)=>{L.push('',label);if(!arr.length)L.push('  - Nothing to report from the recorded data.');else arr.forEach(f=>L.push('  - '+fn(f)))};
+  const line=f=>f.n+' '+f.t;
+  sec('Going well',rv.out.well,line);sec('Improved',rv.out.improved,line);sec('Declined',rv.out.declined,line);sec('What appears to be going wrong',rv.out.wrong,line);
+  sec('Focus next',rv.out.focus,f=>f.rec?f.t:'Give '+f.n+' your attention: '+(f.pl?'they ':'it ')+f.t);
+  L.push('','(Generated only from your recorded entries.)');
+  return L.join('\n');
+}
+function buildTXT(){
+  const blocks=[];
+  Object.keys(db.days).filter(hasData).forEach(k=>blocks.push([k+'a',dayText(k)]));
+  Object.keys(db.weeks).forEach(w=>{if(Object.values(db.weeks[w].a||{}).some(x=>x&&x.t&&x.t.trim()))blocks.push([addD(w,6)+'b',weekText(w)])});
+  ['w','m'].forEach(kind=>reviewStarts(kind).forEach(s=>{
+    const end=periodOf(kind,s).end;
+    if(!reviewReady(end))return;
+    const rv=computeReview(kind,s);
+    if(rv.enough)blocks.push([end+(kind==='w'?'c':'d'),reviewText(rv)]);
+  }));
+  blocks.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+  const nDays=Object.keys(db.days).filter(hasData).length;
+  const head=[RULE,'SADHANAPADA JOURNAL',RULE,
+    'One continuous record. Each day is added below the previous one,',
+    'newest at the bottom. Keep saving over this same file.',
+    '',
+    'Started:       '+fmtFull(dkey(new Date(db.created))),
+    'Last updated:  '+fmtDT(nowISO()),
+    'Days recorded: '+nDays];
+  const payload={v:1,created:db.created,params:db.params,days:db.days,weeks:db.weeks};
+  const foot=[RULE,'END OF ENTRIES',RULE,'',
+    'RESTORE DATA. Do not edit the line below. The app reads it to bring',
+    'everything back if you reinstall or move to a new phone.',
+    'SADHANAPADA-DATA v1 '+JSON.stringify(payload)];
+  return head.join('\n')+'\n\n'+blocks.map(b=>b[1]).join('\n\n')+(blocks.length?'\n\n':'')+foot.join('\n')+'\n';
+}
+function importText(text){
+  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-DATA')===0);
+  if(!line)throw new Error('No restore data found in this text.');
+  const o=JSON.parse(line.slice(line.indexOf('{')));
+  if(!o||typeof o!=='object'||typeof o.days!=='object')throw new Error('The restore data looks damaged.');
+  let nd=0,nw=0,np=0;
+  (o.params||[]).forEach(p=>{if(p&&p.id&&p.name&&!P(p.id)){db.params.push(p);np++}});
+  Object.keys(o.days).forEach(k=>{
+    const inc=o.days[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
+    inc.t=inc.t||{};inc.a=inc.a||{};
+    const cur=db.days[k];
+    if(!cur||(inc.u||'')>(cur.u||'')){db.days[k]=inc;nd++}
+  });
+  Object.keys(o.weeks||{}).forEach(k=>{
+    const inc=o.weeks[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
+    inc.a=inc.a||{};
+    const cur=db.weeks[k];
+    if(!cur||(inc.u||'')>(cur.u||'')){db.weeks[k]=inc;nw++}
+  });
+  if(o.created&&o.created<db.created)db.created=o.created;
+  touch();flush();
+  return {nd,nw,np};
+}
+
+/* ============ ui state & shared pieces ============ */
+const ui={route:'home',date:today(),wk:wkStart(today()),tw:wkStart(today()),ptab:'daily',ttab:'day',mon:monStart(today()),hf:'all',hord:'old',stab:'kriya',draft:null,cell:null,tday:today()};
+const view=$('#view'),sheet=$('#sheet'),toastEl=$('#toast');
+let toastT=null,closeT=null,DL=null;
+function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),2400)}
+const saveSoon=()=>{clearTimeout(saveT);saveT=setTimeout(persist,250)};
+const hdr=(title,o)=>{o=o||{};return '<header class="top"><div class="top-in"><button class="ib" data-go="'+(o.back||'home')+'" aria-label="Back">'+IC.back+'</button><h1>'+esc(title)+'</h1><div class="top-r">'+(o.right||'')+'</div></div>'+(o.sub||'')+'</header>'};
+const tabs=(items,cur,act)=>'<div class="seg" role="tablist">'+items.map(i=>'<button role="tab" class="'+(i[0]===cur?'on':'')+'" data-act="'+act+'" data-v="'+i[0]+'" aria-selected="'+(i[0]===cur)+'">'+esc(i[1])+'</button>').join('')+'</div>';
+const dnav=(main,sub,act,canNext)=>'<div class="dnav"><button class="ib" data-act="'+act+'" data-d="-1" aria-label="Previous">'+IC.back+'</button><div class="dl"><b>'+esc(main)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><button class="ib" data-act="'+act+'" data-d="1" aria-label="Next"'+(canNext?'':' disabled')+'>'+IC.chev+'</button></div>';
+const banner=(icon,html,label,route,act)=>'<div class="banner"><span class="ic" style="color:var(--amber)">'+icon+'</span><p>'+html+'</p><button class="btn sm" '+(act?'data-act="'+act+'"':'data-go="'+route+'"')+'>'+esc(label)+'</button></div>';
+function autosize(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight+2,420)+'px'}
+function openSheet(inner){
+  if(!sheet.firstChild)sheet.innerHTML='<div class="scrim" data-act="closeSheet"></div><div class="panel"></div>';
+  $('.panel',sheet).innerHTML='<div class="grab"></div>'+inner;
+  clearTimeout(closeT);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>sheet.classList.add('open')));
+}
+function closeSheet(){
+  sheet.classList.remove('open');ui.cell=null;ui.draft=null;
+  clearTimeout(closeT);closeT=setTimeout(()=>{if(!sheet.classList.contains('open'))sheet.innerHTML=''},340);
+}
+
+/* ============ home ============ */
+function skySVG(){
+  const n=new Date(),hr=n.getHours()+n.getMinutes()/60,day=hr>=5.5&&hr<19;
+  const t=day?(hr-5.5)/13.5:((hr>=19?hr-19:hr+5)/10.5);
+  const x=(1-t)*(1-t)*20+2*(1-t)*t*160+t*t*300,y=(1-t)*(1-t)*86+2*(1-t)*t*-26+t*t*86;
+  return '<svg class="sky" viewBox="0 0 320 100" aria-hidden="true"><line class="hz" x1="0" y1="86" x2="320" y2="86"/><path class="arc" d="M20 86 Q160 -26 300 86"/><circle class="'+(day?'sun':'moon')+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(day?7:6)+'"/></svg>';
+}
+function vHome(){
+  const now=new Date(),hr=now.getHours(),mins=hr*60+now.getMinutes(),t=today();
+  const greet=hr<5?'Good night':hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const nAns=DQ.filter(q=>answeredD(t,q)).length;
+  const ps=liveParams(),dd=(db.days[t]||{}).t||{},done=ps.filter(p=>dd[p.id]!==undefined).length;
+  const bn=[];
+  if(!storageOK)bn.push('<div class="banner warn"><p><b>Saving is unavailable</b> in this browser, so entries last only while this page stays open. Export your journal from Backup.</p></div>');
+  if(mins>=20*60+30&&nAns===0)bn.push(banner(IC.bell,'<b>Evening reflection</b> is waiting.','Open','params'));
+  if(now.getDay()===0&&mins>=21*60){const wr=db.weeks[wkStart(t)];if(!wr||!Object.keys(wr.a||{}).length)bn.push(banner(IC.bell,'<b>Weekly reflection</b> is ready for you.','Open','','weeklyNow'))}
+  const ur=unseenReview();
+  if(ur)bn.push(banner(IC.chart,'Your <b>'+(ur.kind==='w'?'weekly':'monthly')+' review</b> for '+esc(reviewTitle(ur.kind,ur.start))+' is ready.','Read','review/'+ur.kind+'/'+ur.start));
+  const nDays=Object.keys(db.days).filter(hasData).length;
+  if(db.meta.dirty&&storageOK){
+    const last=db.meta.lastExport,ago=last?Math.floor((Date.now()-new Date(last))/864e5):null;
+    if((last===null&&nDays>=3)||(ago!==null&&ago>=7))bn.push(banner(IC.save,'<b>Save your journal file.</b> '+(last===null?'It is not backed up yet.':'Last saved '+ago+' days ago.'),'Backup','backup'));
+  }
+  const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
+  const rows=[
+    row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
+    row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
+    row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles'),
+    row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
+    row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti')
+  ].join('');
+  const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
+  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.slice(0,2).join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
+}
+
+/* ============ parameters ============ */
+function field(scope,key,q,a,top){
+  const v=a[q.id],id='q-'+q.id;
+  return '<div class="fld"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+(q.h?'<p class="qh">'+esc(q.h)+'</p>':'')+
+    '<textarea id="'+id+'" data-q="'+scope+':'+q.id+'" rows="2" placeholder="Write freely">'+esc(v?v.t:'')+'</textarea><div class="sv" id="sv-'+q.id+'">'+(v?'Saved '+esc(fmtT(v.at)):'')+'</div></div>';
+}
+function qCard(scope,key,q,rec){
+  const a=(rec&&rec.a)||{};
+  if(q.subs)return '<section class="q"><div class="qn">'+q.n+'</div><div class="qb"><h3 class="qt">'+esc(q.q)+'</h3>'+q.subs.map(s=>field(scope,key,s,a,false)).join('')+'</div></section>';
+  return '<section class="q"><div class="qn">'+q.n+'</div><div class="qb">'+field(scope,key,q,a,true)+'</div></section>';
+}
+function pDaily(){
+  const k=ui.date,isT=k===today();
+  return dnav(isT?'Today':fmtLong(k),isT?fmtLong(k):'','pdate',k<today())+DQ.map(q=>qCard('d',k,q,db.days[k])).join('');
+}
+function pWeekly(){
+  const w=ui.wk,cw=wkStart(today()),rec=db.weeks[w];
+  return dnav(fmtRange(w,addD(w,6)),w===cw?'This week':'','pwk',w<cw)+WQ.map(q=>qCard('w',w,q,rec)).join('')+
+    '<h2 class="subh">Seva</h2>'+SQ.map(q=>qCard('w',w,q,rec)).join('');
+}
+function pHistory(){
+  const g=[];
+  Object.keys(db.days).forEach(k=>{
+    const d=db.days[k],items=DQF.filter(q=>d.a&&d.a[q.id]&&d.a[q.id].t.trim());
+    if(items.length)g.push({kind:'d',k,sort:k+'a',items:items.map(q=>({q,a:d.a[q.id]}))});
+  });
+  Object.keys(db.weeks).forEach(w=>{
+    const r=db.weeks[w],items=WQF.concat(SQF).filter(q=>r.a&&r.a[q.id]&&r.a[q.id].t.trim());
+    if(items.length)g.push({kind:'w',k:w,sort:addD(w,6)+'b',items:items.map(q=>({q,a:r.a[q.id]}))});
+  });
+  g.sort((a,b)=>a.sort<b.sort?-1:1);
+  let list=g.filter(x=>ui.hf==='all'||x.kind===(ui.hf==='daily'?'d':'w'));
+  if(ui.hord==='new')list.reverse();
+  const ctl='<div class="chips" style="padding:0 0 10px">'+[['all','All'],['daily','Daily'],['weekly','Weekly']].map(c=>'<button class="chip sm '+(ui.hf===c[0]?'on':'')+'" data-act="hf" data-v="'+c[0]+'">'+c[1]+'</button>').join('')+
+    '<button class="chip sm" data-act="hord" style="margin-left:auto">'+(ui.hord==='old'?'Oldest first':'Newest first')+'</button></div>';
+  if(!list.length)return ctl+'<div class="empty"><h2>No entries yet</h2><p>Your answers are saved here automatically, with the date and time.</p></div>';
+  const rows=list.map(x=>{
+    const last=x.items.reduce((m,i)=>i.a.at>m?i.a.at:m,'');
+    const label=x.kind==='d'?DAYS[pk(x.k).getDay()]+' '+fmtFull(x.k):'Week of '+fmtRange(x.k,addD(x.k,6));
+    return '<details class="hg"><summary><div class="hd"><b>'+esc(label)+(x.kind==='w'?'<span class="tag w">Weekly</span>':'')+'</b><small>'+plural(x.items.length,'answer')+', last saved '+esc(fmtDT(last))+'</small></div><span class="cv">'+IC.chev+'</span></summary><div class="hbody">'+
+      x.items.map(i=>'<div class="ha"><div class="hq">'+esc(i.q.num+'. '+i.q.q)+'</div><div class="hx">'+esc(i.a.t)+'</div><div class="ht">Saved '+esc(fmtDT(i.a.at))+'</div></div>').join('')+
+      '<div class="btns"><button class="btn sm" data-act="editEntry" data-kind="'+x.kind+'" data-k="'+x.k+'">Open to edit</button></div></div></details>';
+  }).join('');
+  return ctl+'<p class="muted small" style="margin-bottom:6px">'+plural(list.length,'entry','entries')+', '+(ui.hord==='old'?'oldest first':'newest first')+'</p>'+rows;
+}
+function vParams(){
+  const body=ui.ptab==='daily'?pDaily():ui.ptab==='weekly'?pWeekly():pHistory();
+  return hdr('Parameters')+'<main class="pg">'+tabs([['daily','Daily'],['weekly','Weekly'],['history','History']],ui.ptab,'ptab')+body+'</main>';
+}
+
+/* ============ tracker ============ */
+function ctl(p,v,k){
+  const d='data-p="'+p.id+'" data-k="'+k+'"';
+  switch(p.type){
+    case 'check':return '<button class="tog '+(v?'on':'')+'" data-act="tog" '+d+' aria-pressed="'+(!!v)+'" aria-label="'+esc(p.name)+'">'+IC.check+'</button>';
+    case 'star':return '<button class="tog star '+(v?'on':'')+'" data-act="tog" '+d+' aria-pressed="'+(!!v)+'" aria-label="'+esc(p.name)+'">'+(v?IC.starF:IC.star)+'</button>';
+    case 'mood':return '<div class="opts">'+['h','n','s'].map(m=>'<button class="opt '+(v===m?'on':'')+'" data-act="set" data-v="'+m+'" '+d+' aria-label="'+MOODL[m]+'" aria-pressed="'+(v===m)+'">'+IC['face_'+m]+'</button>').join('')+'</div>';
+    case 'rating':return '<div class="opts">'+[1,2,3,4,5].map(n=>'<button class="opt '+(v>=n?'fill':'')+' '+(v===n?'on':'')+'" data-act="set" data-v="'+n+'" '+d+' aria-label="'+n+' of 5">'+n+'</button>').join('')+'</div>';
+    case 'symbol':return '<div class="opts">'+(p.sym||[]).map((o,i)=>'<button class="opt '+(v===i?'on':'')+'" data-act="set" data-v="'+i+'" '+d+' aria-label="'+esc(o.l||o.g||'')+'" aria-pressed="'+(v===i)+'">'+symHTML(o)+'</button>').join('')+'</div>';
+    case 'count':return '<div class="step"><button class="opt" data-act="cnt" data-d="-1" '+d+' aria-label="Less">−</button><b>'+(v===undefined?'–':v)+'</b><button class="opt" data-act="cnt" data-d="1" '+d+' aria-label="More">+</button></div>';
+  }
+  return '';
+}
+function tDay(ps){
+  const k=ui.date,t=today(),d=db.days[k]||{},vals=d.t||{};
+  const rows=ps.map(p=>'<div class="trow"><div class="tl"><div class="tn">'+esc(p.name)+'</div>'+(p.time?'<div class="tm">'+esc(fmtHM(p.time))+'</div>':'')+(p.type==='count'&&p.unit?'<div class="tm">'+esc(p.unit)+'</div>':'')+'</div><div class="ctl">'+ctl(p,vals[p.id],k)+'</div></div>').join('');
+  const note='<div class="notes"><label for="dn">Notes</label><textarea id="dn" data-note="1" rows="3" placeholder="Anything to remember about this day">'+esc(d.n?d.n.t:'')+'</textarea><div class="sv" id="sv-note">'+(d.n?'Saved '+esc(fmtT(d.n.at)):'')+'</div></div>';
+  return dnav(k===t?'Today':fmtLong(k),k===t?fmtLong(k):'','tdate',k<t)+'<div>'+rows+'</div>'+note;
+}
+function tWeek(ps){
+  const ws=ui.tw,days=range(ws,addD(ws,6)),t=today(),hasTime=ps.some(p=>p.time),cw=wkStart(t);
+  const cols=(hasTime?'44px ':'')+'minmax(96px,2.4fr) repeat(7,minmax(28px,1fr))';
+  let g='<div class="g" style="grid-template-columns:'+cols+'">';
+  if(hasTime)g+='<div class="gh lab">Time</div>';
+  g+='<div class="gh lab">What to track</div>';
+  days.forEach(k=>{g+='<button class="gh '+(k===t?'today':'')+'" data-act="openDay" data-k="'+k+'" aria-label="'+esc(fmtLong(k))+'">'+DAYS[pk(k).getDay()][0]+'<b>'+pk(k).getDate()+'</b></button>'});
+  ps.forEach(p=>{
+    if(hasTime)g+='<div class="gt">'+(p.time?esc(fmtHM(p.time)).replace(' ','<br>'):'')+'</div>';
+    g+='<div class="gn">'+esc(p.name)+'</div>';
+    days.forEach(k=>{const v=((db.days[k]||{}).t||{})[p.id];g+='<button class="cell '+(k>t?'fut':'')+'" data-act="cell" data-p="'+p.id+'" data-k="'+k+'" aria-label="'+esc(p.name+', '+fmtShort(k))+'">'+mark(p,v)+'</button>'});
+  });
+  g+='</div>';
+  const notes=days.filter(k=>db.days[k]&&db.days[k].n&&db.days[k].n.t&&db.days[k].n.t.trim());
+  const nh='<div class="wnotes"><div class="wt">Notes:</div>'+notes.map(k=>'<button class="wn" data-act="openDay" data-k="'+k+'"><b>'+DAYS[pk(k).getDay()]+' '+pk(k).getDate()+'</b>'+esc(db.days[k].n.t.length>140?db.days[k].n.t.slice(0,140)+'…':db.days[k].n.t)+'</button>').join('')+(notes.length<2?'<div class="wl"></div>':'')+(notes.length<1?'<div class="wl"></div>':'')+'</div>';
+  return dnav(fmtRange(ws,addD(ws,6)),ws===cw?'This week':'','twk',ws<cw)+'<div class="paper"><div class="p-head"><span class="p-title">Tracker</span><span class="p-range">From <u>'+esc(fmtShort(ws))+'</u> To <u>'+esc(fmtShort(addD(ws,6)))+'</u></span></div>'+g+nh+'</div><p class="hint">Tap a cell to record it. Tap a date to open that day.</p>';
+}
+function tMonth(ps){
+  const ms=ui.mon,me=monEnd(ms),t=today(),lead=(pk(ms).getDay()+6)%7;
+  let c='<div class="cal">'+['M','T','W','T','F','S','S'].map(x=>'<div class="wd">'+x+'</div>').join('')+'<div></div>'.repeat(lead);
+  range(ms,me).forEach(k=>{
+    const vals=((db.days[k]||{}).t)||{},frac=ps.length?ps.filter(p=>vals[p.id]!==undefined).length/ps.length:0;
+    const refl=DQ.some(q=>answeredD(k,q));
+    c+='<button class="cd '+(k===t?'today':'')+' '+(k===ui.date?'sel':'')+'" data-act="openDay" data-k="'+k+'"'+(k>t?' disabled':'')+' aria-label="'+esc(fmtLong(k))+'"><div class="ring" style="--p:'+Math.round(frac*360)+'deg"><span>'+pk(k).getDate()+'</span></div><i class="dot '+(refl?'on':'')+'"></i></button>';
+  });
+  c+='</div>';
+  const n=range(ms,me).filter(hasData).length,d=pk(ms);
+  return dnav(MON[d.getMonth()]+' '+d.getFullYear(),'','tmon',ms<monStart(t))+c+'<div class="legend"><span><i></i>Share of trackers recorded</span><span><i class="b"></i>Reflection answered</span></div><p class="stat">'+plural(n,'day')+' recorded in '+MON[d.getMonth()]+'</p>';
+}
+function emptyTracker(){
+  return '<div class="empty"><h2>Make it your own</h2><p>Choose what you want to track. Each one can be recorded in its own way: a tick, a mood, a star, a rating, your own symbols or a count.</p></div><div class="sugg">'+SUGGEST.map((s,i)=>'<button class="chip" data-act="suggest" data-i="'+i+'">'+esc(s.name)+' <span style="opacity:.6">('+TYPES[s.type].toLowerCase()+')</span></button>').join('')+'</div><div class="btns" style="justify-content:center"><button class="btn pri" data-act="addP">'+IC.plus+' Add my own</button></div>';
+}
+function vTracker(){
+  const ps=liveParams();
+  const right='<button class="ib" data-go="tracker/manage" aria-label="Manage trackers">'+IC.sliders+'</button>';
+  const body=!ps.length?emptyTracker():ui.ttab==='day'?tDay(ps):ui.ttab==='week'?tWeek(ps):tMonth(ps);
+  return hdr('Daily Tracker',{right})+'<main class="pg">'+tabs([['day','Day'],['week','Week'],['month','Month']],ui.ttab,'ttab')+body+'</main>';
+}
+function cellSheet(pid,k){
+  const p=P(pid);if(!p)return;
+  const v=((db.days[k]||{}).t||{})[pid];
+  ui.cell={pid,k};
+  openSheet('<h2>'+esc(p.name)+'</h2><div class="sub">'+esc(fmtLong(k))+'</div><div class="ctl-big">'+ctl(p,v,k)+'</div><div class="btns" style="justify-content:space-between;margin-top:18px"><button class="btn sm" data-act="clr" data-p="'+pid+'" data-k="'+k+'">Clear</button><button class="btn pri sm" data-act="closeSheet">Done</button></div>');
+}
+
+/* ============ manage trackers ============ */
+const typeLabel=p=>TYPES[p.type]+(p.type==='count'?(p.dir==='less'?', fewer is better':p.dir==='track'?', just track':', more is better'):'');
+function vManage(){
+  const live=liveParams(),arch=db.params.filter(p=>p.archived);
+  const row=(p,i)=>'<div class="mrow"><div class="mi"><b>'+esc(p.name)+'</b><small>'+esc(typeLabel(p))+(p.time?', '+esc(fmtHM(p.time)):'')+'</small></div>'+
+    '<button class="ib" data-act="mup" data-p="'+p.id+'" aria-label="Move up"'+(i===0?' disabled style="opacity:.25"':'')+'>'+IC.up+'</button>'+
+    '<button class="ib" data-act="mdown" data-p="'+p.id+'" aria-label="Move down"'+(i===live.length-1?' disabled style="opacity:.25"':'')+'>'+IC.down+'</button>'+
+    '<button class="ib" data-act="medit" data-p="'+p.id+'" aria-label="Edit">'+IC.edit+'</button>'+
+    '<button class="ib" data-act="march" data-p="'+p.id+'" aria-label="Remove">'+IC.trash+'</button></div>';
+  return hdr('Trackers',{back:'tracker'})+'<main class="pg"><p class="muted small" style="margin-top:6px">Removing a tracker only hides it. Everything you recorded stays in your history and journal.</p><div class="btns"><button class="btn pri" data-act="addP">'+IC.plus+' Add a tracker</button></div>'+
+    (live.length?live.map(row).join(''):'<p class="muted small">Nothing here yet.</p>')+
+    (arch.length?'<h2 class="subh">Removed</h2>'+arch.map(p=>'<div class="mrow"><div class="mi"><b>'+esc(p.name)+'</b><small>'+esc(typeLabel(p))+'</small></div><button class="btn sm" data-act="mrest" data-p="'+p.id+'">Restore</button></div>').join(''):'')+'</main>';
+}
+const segs=s=>{try{if(window.Intl&&Intl.Segmenter)return Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(s),x=>x.segment).filter(x=>x.trim())}catch(e){}return Array.from(s.replace(/\s+/g,''))};
+function syncDraft(){
+  const d=ui.draft;if(!d)return;
+  const g=id=>{const e=document.getElementById(id);return e?e.value:null};
+  const n=g('f-name');if(n!==null)d.name=n;
+  const t=g('f-time');if(t!==null)d.time=t;
+  const u=g('f-unit');if(u!==null)d.unit=u;
+  const c=g('f-custom');if(c!==null)d.custom=c;
+}
+function paramSheet(){
+  const d=ui.draft,ed=!!d.id;
+  let h='<h2>'+(ed?'Edit tracker':'Add a tracker')+'</h2>';
+  h+='<label class="lab" for="f-name">Name</label><input type="text" id="f-name" value="'+esc(d.name)+'" placeholder="For example, Morning kriya" maxlength="60" autocomplete="off">';
+  h+='<label class="lab" for="f-time">Time, if it has one (optional)</label><input type="time" id="f-time" value="'+esc(d.time)+'">';
+  h+='<span class="lab">How to record it</span>';
+  if(ed)h+='<p class="small muted">'+esc(TYPES[d.type])+'. The way of recording cannot change after it is created, so your past entries stay accurate.</p>';
+  else h+='<div class="types">'+Object.keys(TYPES).map(t=>'<button class="chip '+(d.type===t?'on':'')+'" data-act="ptype" data-v="'+t+'">'+TYPES[t]+'</button>').join('')+'</div><p class="small muted" style="margin-top:8px">'+TYPEDESC[d.type]+'</p>';
+  if(d.type==='symbol'&&!ed){
+    h+='<div class="sopts">'+Object.keys(SYMSETS).map(k=>'<button class="sopt '+(d.set===k?'on':'')+'" data-act="pset" data-v="'+k+'"><span class="pv">'+SYMSETS[k].opts.map(o=>'<span class="ic mk">'+symHTML(o)+'</span>').join('')+'</span><span>'+SYMSETS[k].name+'</span></button>').join('')+
+      '<button class="sopt '+(d.set==='custom'?'on':'')+'" data-act="pset" data-v="custom"><span class="pv"><span class="glyph">✦</span></span><span>My own symbols</span></button></div>';
+    if(d.set==='custom')h+='<input type="text" id="f-custom" value="'+esc(d.custom)+'" placeholder="Type 2 to 5 symbols, best first, like 🌕🌓🌑" autocomplete="off">';
+  }
+  if(d.type==='count'){
+    h+='<label class="lab" for="f-unit">Unit (optional)</label><input type="text" id="f-unit" value="'+esc(d.unit)+'" placeholder="times, minutes, glasses" maxlength="20" autocomplete="off">';
+    h+='<span class="lab">Which direction is better?</span><div class="types">'+[['more','More is better'],['less','Fewer is better'],['track','Just track']].map(x=>'<button class="chip '+(d.dir===x[0]?'on':'')+'" data-act="pdir" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+  }
+  h+='<div class="btns" style="justify-content:space-between;margin-top:22px"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn pri" data-act="saveP">Save</button></div>';
+  openSheet(h);
+}
+const newDraft=()=>({id:null,name:'',time:'',type:'check',set:'circles',custom:'',unit:'',dir:'more'});
+
+/* ============ practice reference ============ */
+const strip=h=>h.replace(/<[^>]*>/g,' ').replace(/&[a-z#0-9]+;/g,' ').replace(/\s+/g,' ').toLowerCase().trim();
+const sx=(tag,cls,inner)=>'<'+tag+' class="sx '+(cls||'')+'" data-s="'+esc(strip(inner))+'">'+inner+'</'+tag+'>';
+function asanaItem(a){
+  const subs=(a.subs||[]).map(s=>'<div class="psb"><span>'+esc(s[0])+'</span><span>'+esc(s[1])+'</span></div>').join('');
+  return sx('div','pitem'+(a.opt?' opt2':''),'<span class="pn">'+esc(a.n||'')+'</span><span class="pnm">'+esc(a.name)+(a.tr?' <i>('+esc(a.tr)+')</i>':'')+'</span><span class="prp">'+esc(a.reps||'')+'</span>'+subs+(a.note?'<div class="pno">'+esc(a.note)+'</div>':''));
+}
+function blk(b){
+  switch(b.k){
+    case 'p':return sx('p','pp',esc(b.t));
+    case 'h':return '<h4 class="ph">'+esc(b.t)+'</h4>';
+    case 'note':return sx('div','pnote',esc(b.t));
+    case 'ul':return '<ul class="pul">'+b.items.map(i=>sx('li','',esc(i))).join('')+'</ul>';
+    case 'ol':return '<ol class="pol">'+b.items.map(i=>sx('li','',esc(i))).join('')+'</ol>';
+    case 'card':return sx('div','pcard','<div class="pch">'+esc(b.h)+'</div>'+(b.t?'<p>'+esc(b.t)+'</p>':'')+(b.notes.length?'<div class="tags">'+b.notes.map(n=>'<span>'+esc(n)+'</span>').join('')+'</div>':''));
+    case 'pattern':return '<div class="pattern">'+b.steps.map(s=>sx('div','','<b>'+esc(s[0])+'</b>'+esc(s[1]))).join('')+'</div>';
+    case 'table':return '<table class="tbl '+(b.num?'num':'')+'"><thead><tr>'+b.head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+b.rows.map(r=>typeof r==='string'?sx('tr','sepr','<td colspan="'+b.head.length+'">'+esc(r)+'</td>'):sx('tr','',r.map(c=>'<td>'+c+'</td>').join(''))).join('')+'</tbody></table>';
+    case 'steps':return '<ol class="stepsl">'+b.items.map(i=>sx('li','','<span>'+esc(i[0])+'</span><span>'+esc(i[1])+'</span>')).join('')+'</ol>';
+    case 'asanas':return b.items.map(asanaItem).join('');
+    case 'group':return '<div class="pgroup"><div class="pgh"><b>'+esc(b.t)+(b.tr?' <span>('+esc(b.tr)+')</span>':'')+'</b><span>'+esc(b.reps||'')+'</span></div>'+b.items.map(asanaItem).join('')+'</div>';
+  }
+  return '';
+}
+function vPractice(key){
+  const data=PRACTICE[key];let secs=data.secs,tb='';
+  if(key==='surya'){
+    const tab=data.tabs.find(t=>t.id===ui.stab)||data.tabs[0];
+    secs=tab.secs;tb=tabs(data.tabs.map(t=>[t.id,t.t]),tab.id,'stab');
+  }
+  const chips='<div class="chips">'+secs.map(s=>'<button class="chip" data-act="jump" data-id="'+s.id+'">'+esc(s.t.replace(/^\d+\.\s*/,''))+'</button>').join('')+'</div>';
+  return hdr(data.title,{sub:chips})+'<main class="pg">'+tb+'<div class="search">'+IC.search+'<input type="text" id="psearch" placeholder="Search this page" autocomplete="off" aria-label="Search this page"></div>'+
+    secs.map(s=>'<section class="psec" id="sec-'+s.id+'" data-t="'+esc(s.t.toLowerCase())+'"><h2>'+esc(s.t)+'</h2>'+s.b.map(blk).join('')+'</section>').join('')+'<div class="nomatch" id="nomatch" hidden>Nothing matches that search.</div></main>';
+}
+function applySearch(q){
+  q=q.trim().toLowerCase();let any=false;
+  $$('.psec',view).forEach(sec=>{
+    const tm=q&&sec.dataset.t.indexOf(q)>=0;let vis=false;
+    $$('.sx',sec).forEach(x=>{const m=!q||tm||x.dataset.s.indexOf(q)>=0;x.hidden=!m;if(m)vis=true});
+    $$('.pgroup',sec).forEach(gp=>{gp.hidden=!!q&&!$$('.sx',gp).some(x=>!x.hidden)});
+    sec.hidden=!!q&&!vis&&!tm;if(!sec.hidden)any=true;
+  });
+  const nm=$('#nomatch');if(nm)nm.hidden=!q||any;
+}
+
+/* ============ reviews ============ */
+function vReviews(){
+  const mk=(kind,cap)=>reviewStarts(kind).slice(0,cap).map(s=>{
+    const end=periodOf(kind,s).end,ready=reviewReady(end),n=ctxFor(kind,s).active.length,seen=db.meta.seen[kind+':'+s];
+    const pill=!ready?'<span class="pill live">In progress</span>':(seen||n<2?'':'<span class="pill new">New</span>');
+    return '<button class="rrow" data-go="review/'+kind+'/'+s+'"><div class="rt2"><b>'+esc(reviewTitle(kind,s))+'</b><small>'+plural(n,'day')+' recorded</small></div>'+pill+'<span class="cv" style="color:var(--ink3)">'+IC.chev+'</span></button>';
+  }).join('');
+  const w=mk('w',52),m=mk('m',24);
+  return hdr('Reviews')+'<main class="pg"><p class="muted small" style="margin-top:6px">Weekly reviews are ready each Sunday at 9:30 PM and monthly reviews on the last day of the month at 9:30 PM. They are built only from what you have recorded.</p>'+
+    '<h2 class="subh" style="border:0;padding-top:0;margin-top:20px">Weekly</h2><div class="rlist">'+(w||'<p class="muted small">Your first review will appear once you record something.</p>')+'</div>'+
+    '<h2 class="subh" style="border:0;padding-top:0">Monthly</h2><div class="rlist">'+(m||'<p class="muted small">Nothing yet.</p>')+'</div></main>';
+}
+function vReview(kind,start){
+  const rv=computeReview(kind,start),end=rv.end,ready=reviewReady(end),per=kind==='w'?'week':'month',o=rv.out;
+  if(ready&&!db.meta.seen[kind+':'+start]){db.meta.seen[kind+':'+start]=1;saveSoon()}
+  const B=(cls,title,arr,fn)=>'<section class="rb b-'+cls+'"><h3><span class="dotc"></span>'+title+'</h3>'+(arr.length?'<ul>'+arr.map(f=>'<li>'+fn(f)+'</li>').join('')+'</ul>':'<div class="none">Nothing to report from your recorded data.</div>')+'</section>';
+  const line=f=>'<b>'+esc(f.n)+'</b> '+esc(f.t);
+  let h=hdr(kind==='w'?'Weekly review':'Monthly review',{back:'reviews'})+'<main class="pg rv"><h2 class="big">'+esc(reviewTitle(kind,start))+'</h2><p class="lead">'+plural(rv.c.active.length,'day')+' with entries out of '+rv.c.keys.length+(ready?'':'. This '+per+' is still in progress, so this is a preview.')+'</p>';
+  if(!rv.enough)return h+'<div class="empty"><h2>Not enough to review yet</h2><p>Record at least two days in this '+per+' and patterns will appear here.</p></div></main>';
+  h+=B('well','Going well',o.well,line)+B('improved','What has improved',o.improved,line)+B('declined','What has declined',o.declined,line)+B('wrong','What appears to be going wrong',o.wrong,line);
+  h+=B('focus','Focus on next '+per,o.focus,f=>f.rec?esc(f.t):'Give <b>'+esc(f.n)+'</b> your attention: '+(f.pl?'they ':'it ')+esc(f.t));
+  if(rv.numbers.length)h+='<section class="rb"><h3>The numbers</h3><table class="ntbl"><thead><tr><th>Tracker</th><th>This '+per+'</th><th>Before</th><th>Change</th></tr></thead><tbody>'+rv.numbers.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.now)+'</td><td>'+esc(r.before)+'</td><td class="'+r.cls+'">'+esc(r.chg)+'</td></tr>').join('')+'</tbody></table></section>';
+  if(rv.themes.length)h+='<section class="rb"><h3>Words you used most</h3><p class="small muted">Simple counts from your written answers. Nothing is interpreted.</p><div class="words">'+rv.themes.map(t=>'<span>'+esc(t.w)+'<em>×'+t.n+(t.rising?', more than before':'')+'</em></span>').join('')+'</div></section>';
+  h+='<p class="foot">Built only from your entries. Ratings are scored 1 to 5, moods 1 (sad) to 3 (happy) and symbols by their order, best to last. “Before” is the '+(kind==='w'?'previous week':'previous month')+'. Nothing here is inferred beyond what you recorded.</p></main>';
+  return h;
+}
+
+/* ============ backup ============ */
+function vBackup(){
+  const nDays=Object.keys(db.days).filter(hasData).length;
+  let nR=0;Object.keys(db.days).forEach(k=>{nR+=Object.values(db.days[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
+  Object.keys(db.weeks).forEach(k=>{nR+=Object.values(db.weeks[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
+  const last=db.meta.lastExport;
+  const canShare=!!(navigator.canShare&&navigator.share&&(()=>{try{return navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})}catch(e){return false}})());
+  return hdr('Backup')+'<main class="pg">'+
+    '<div class="card"><h3>Your journal</h3><div class="kv"><span>Days recorded</span><span>'+nDays+'</span></div><div class="kv"><span>Answers saved</span><span>'+nR+'</span></div><div class="kv"><span>Last saved to a file</span><span>'+(last?esc(fmtDT(last)):'Not yet')+'</span></div><div class="kv"><span>Changes since then</span><span>'+(db.meta.dirty?'Yes':'None')+'</span></div></div>'+
+    '<p class="muted small" style="margin:12px 2px">Everything lives in one text file. Each day is added below the previous one, with the newest at the bottom. The file always has the same name, so save over the older copy and keep it somewhere safe, like Google Drive or Files. That copy stays with you even if the app is removed.</p>'+
+    '<div class="btns"><button class="btn pri" data-act="saveTxt">'+IC.save+' Save journal file</button>'+(canShare?'<button class="btn" data-act="shareTxt">Share</button>':'')+'<button class="btn" data-go="journal">'+IC.eye+' Read it</button><button class="btn" data-act="copyTxt">'+IC.copy+' Copy</button></div>'+
+    '<div class="card"><h3>Restore</h3><p>Bring everything back from a saved journal file, for example after reinstalling. Entries already here are kept, and the newer version of any day wins.</p><div class="btns"><button class="btn sm" data-act="pickFile">'+IC.upload+' Choose file</button><button class="btn sm" data-act="pasteRestore">Paste text</button></div></div>'+
+    '<div class="card"><h3>Reminders</h3><div class="kv"><span>Daily reflection</span><span>Every day, 8:30 PM</span></div><div class="kv"><span>Weekly reflection</span><span>Sunday, 9:00 PM</span></div><div class="kv"><span>Weekly review</span><span>Sunday, 9:30 PM</span></div><div class="kv"><span>Monthly review</span><span>Last day, 9:30 PM</span></div><p style="margin-top:8px">A web app cannot wake itself in the background, so these alerts come from your phone’s Calendar. This screen only lists the times. When you open the app after a time has passed, a gentle prompt appears on Home.</p></div>'+
+    '<div class="card"><h3>Where your data lives</h3><p>'+(storageOK?'Saved automatically on this device, in this browser only. Nothing is sent anywhere.':'This browser is blocking storage. Save your journal file often.')+'</p></div>'+
+    '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
+}
+function vJournal(){
+  return hdr('Journal',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
+}
+
+/* ============ router ============ */
+const parseHash=()=>{const h=(location.hash||'').replace(/^#\/?/,'');return h||'home'};
+function render(anim){
+  const parts=ui.route.split('/'),a=parts[0];let h;
+  try{
+    switch(a){
+      case 'params':h=vParams();break;
+      case 'tracker':h=parts[1]==='manage'?vManage():vTracker();break;
+      case 'yoga':case 'shakti':case 'surya':h=vPractice(a);break;
+      case 'reviews':h=vReviews();break;
+      case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
+      case 'backup':h=vBackup();break;
+      case 'journal':h=vJournal();break;
+      default:h=vHome();
+    }
+  }catch(e){console.error(e);h='<main class="pg"><p style="padding-top:40px">Something went wrong while showing this page.</p><div class="btns"><button class="btn" data-go="home">Back to Home</button></div></main>'}
+  view.innerHTML=h;
+  if(anim){view.classList.remove('enter');void view.offsetWidth;view.classList.add('enter')}
+  $$('textarea',view).forEach(autosize);
+}
+function go(r){
+  closeSheet();
+  if(r===ui.route){render();return}
+  ui.route=r;
+  try{if(location.hash!=='#/'+r)location.hash='/'+r}catch(e){}
+  render(true);window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',()=>{const r=parseHash();if(r!==ui.route){ui.route=r;closeSheet();render(true);window.scrollTo(0,0)}});
+
+/* ============ actions ============ */
+const valOf=(k,pid)=>((db.days[k]||{}).t||{})[pid];
+function moveParam(id,dir){
+  const live=liveParams(),i=live.findIndex(p=>p.id===id),j=i+dir;
+  if(i<0||j<0||j>=live.length)return;
+  const a=db.params.indexOf(live[i]),b=db.params.indexOf(live[j]);
+  const tmp=db.params[a];db.params[a]=db.params[b];db.params[b]=tmp;touch();render();
+}
+function addParam(o){
+  const p={id:uid(),name:o.name,type:o.type,time:o.time||'',unit:o.unit||'',dir:o.dir||'more',archived:false,c:today()};
+  if(o.type==='symbol')p.sym=o.sym||SYMSETS[o.set||'circles'].opts.map(x=>Object.assign({},x));
+  db.params.push(p);touch();return p;
+}
+async function deliver(txt){
+  const name='Sadhanapada-Journal.txt';
+  if(DL){
+    try{await DL.save({filename:name,data:txt});return true}
+    catch(e){
+      if(e&&e.code==='declined')return false;
+      if(e&&e.code==='rate_limited'){toast('Please wait a moment, then try again');return false}
+    }
+  }
+  try{
+    const f=new File([txt],name,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Sadhanapada journal'});return true}
+  }catch(e){if(e&&e.name==='AbortError')return false}
+  try{
+    const u=URL.createObjectURL(new Blob([txt],{type:'text/plain'})),a=document.createElement('a');
+    a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return true;
+  }catch(e){}
+  toast('Saving a file is not available here. Use Copy instead.');return false;
+}
+function markExported(){db.meta.lastExport=nowISO();db.meta.dirty=false;flush()}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){}
+  try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(e){return false}
+}
+function doImport(text){
+  try{const r=importText(text);closeSheet();render();toast('Restored '+plural(r.nd,'day')+(r.nw?' and '+plural(r.nw,'weekly entry','weekly entries'):''))}
+  catch(e){toast(e.message||'Could not restore from that')}
+}
+
+const ACT={
+  ptab(a){ui.ptab=a.dataset.v;render()},
+  pdate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
+  pwk(a){const n=addD(ui.wk,7*a.dataset.d);if(n>wkStart(today()))return;ui.wk=n;render()},
+  hf(a){ui.hf=a.dataset.v;render()},
+  hord(){ui.hord=ui.hord==='old'?'new':'old';render()},
+  editEntry(a){if(a.dataset.kind==='d'){ui.date=a.dataset.k;ui.ptab='daily'}else{ui.wk=a.dataset.k;ui.ptab='weekly'}render();window.scrollTo(0,0)},
+  weeklyNow(){ui.ptab='weekly';ui.wk=wkStart(today());go('params')},
+  ttab(a){ui.ttab=a.dataset.v;render()},
+  tdate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
+  twk(a){const n=addD(ui.tw,7*a.dataset.d);if(n>wkStart(today()))return;ui.tw=n;render()},
+  tmon(a){const n=addM(ui.mon,+a.dataset.d);if(n>monStart(today()))return;ui.mon=n;render()},
+  openDay(a){ui.date=a.dataset.k;ui.ttab='day';if(ui.route==='tracker'){render();window.scrollTo(0,0)}else go('tracker')},
+  tog(a){const p=P(a.dataset.p),k=a.dataset.k;if(!p)return;setT(k,p.id,valOf(k,p.id)?null:true);render()},
+  set(a){
+    const p=P(a.dataset.p),k=a.dataset.k;if(!p)return;
+    const v=p.type==='mood'?a.dataset.v:Number(a.dataset.v);
+    setT(k,p.id,valOf(k,p.id)===v?null:v);
+    if(ui.cell)closeSheet();
+    render();
+  },
+  cnt(a){
+    const p=P(a.dataset.p),k=a.dataset.k;if(!p)return;
+    const cur=valOf(k,p.id),d=Number(a.dataset.d);
+    setT(k,p.id,d>0?(cur===undefined?1:cur+1):(cur===undefined?0:Math.max(0,cur-1)));
+    if(ui.cell)cellSheet(p.id,k);
+    render();
+  },
+  clr(a){const p=P(a.dataset.p);if(!p)return;setT(a.dataset.k,p.id,null);closeSheet();render()},
+  cell(a){
+    const p=P(a.dataset.p),k=a.dataset.k;if(!p||k>today())return;
+    if(p.type==='check'||p.type==='star'){setT(k,p.id,valOf(k,p.id)?null:true);render()}
+    else cellSheet(p.id,k);
+  },
+  closeSheet(){closeSheet()},
+  mup(a){moveParam(a.dataset.p,-1)},
+  mdown(a){moveParam(a.dataset.p,1)},
+  medit(a){const p=P(a.dataset.p);if(!p)return;ui.draft={id:p.id,name:p.name,time:p.time||'',type:p.type,set:'circles',custom:'',unit:p.unit||'',dir:p.dir||'more'};paramSheet()},
+  march(a){const p=P(a.dataset.p);if(!p)return;p.archived=true;touch();render();toast('Removed. Your past entries are kept.')},
+  mrest(a){const p=P(a.dataset.p);if(!p)return;p.archived=false;touch();render()},
+  addP(){ui.draft=newDraft();paramSheet()},
+  ptype(a){syncDraft();ui.draft.type=a.dataset.v;paramSheet()},
+  pset(a){syncDraft();ui.draft.set=a.dataset.v;paramSheet()},
+  pdir(a){syncDraft();ui.draft.dir=a.dataset.v;paramSheet()},
+  saveP(){
+    syncDraft();const d=ui.draft;if(!d)return;
+    const name=d.name.trim();
+    if(!name){toast('Please give it a name');return}
+    if(d.id){const p=P(d.id);if(p){p.name=name;p.time=d.time||'';p.unit=(d.unit||'').trim();if(p.type==='count')p.dir=d.dir}}
+    else{
+      let sym;
+      if(d.type==='symbol'){
+        if(d.set==='custom'){
+          const g=segs(d.custom||'').slice(0,5);
+          if(g.length<2){toast('Add at least two symbols');return}
+          sym=g.map((x,i)=>({g:x,l:x,s:1-i/(g.length-1)}));
+        }else sym=SYMSETS[d.set].opts.map(o=>Object.assign({},o));
+      }
+      addParam({name,type:d.type,time:d.time,unit:(d.unit||'').trim(),dir:d.dir,sym});
+    }
+    touch();closeSheet();render();
+  },
+  suggest(a){const s=SUGGEST[+a.dataset.i];if(!s)return;addParam(s);render();toast(s.name+' added')},
+  stab(a){ui.stab=a.dataset.v;render();window.scrollTo(0,0)},
+  jump(a){const e=document.getElementById('sec-'+a.dataset.id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},
+  async saveTxt(){if(await deliver(buildTXT())){markExported();render();toast('Journal saved')}},
+  async shareTxt(){
+    try{const f=new File([buildTXT()],'Sadhanapada-Journal.txt',{type:'text/plain'});await navigator.share({files:[f],title:'Sadhanapada journal'});markExported();render()}
+    catch(e){if(!e||e.name!=='AbortError')toast('Sharing is not available here')}
+  },
+  async copyTxt(){toast(await copyText(buildTXT())?'Journal copied':'Could not copy')},
+  pickFile(){$('#filein').click()},
+  pasteRestore(){openSheet('<h2>Restore from text</h2><p class="sub">Paste the full contents of your journal file.</p><textarea id="paste-in" rows="6" placeholder="Paste here"></textarea><div class="btns" style="justify-content:space-between;margin-top:18px"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn pri" data-act="doPaste">Restore</button></div>')},
+  doPaste(){const t=$('#paste-in');doImport(t?t.value:'')},
+  wipe(){openSheet('<h2>Erase everything?</h2><p class="sub" style="margin-top:8px;font-size:14.5px">This removes every entry, tracker and review from this device. Save your journal file first if you want to keep a copy. This cannot be undone.</p><div class="btns" style="justify-content:space-between;margin-top:20px"><button class="btn" data-act="closeSheet">Keep my data</button><button class="btn warn" data-act="wipeYes">Erase</button></div>')},
+  wipeYes(){db=blank();flush();closeSheet();ui.date=today();go('home');toast('Everything was erased')}
+};
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  if(g){e.preventDefault();go(g.dataset.go);return}
+  const a=e.target.closest('[data-act]');
+  if(!a||a.disabled)return;
+  const fn=ACT[a.dataset.act];
+  if(fn)fn(a,e);
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(!t||!t.matches)return;
+  if(t.matches('textarea'))autosize(t);
+  if(t.dataset&&t.dataset.q){
+    const p=t.dataset.q.split(':'),sc=p[0],id=p[1],key=sc==='d'?ui.date:ui.wk;
+    setAns(sc,key,id,t.value);
+    const rec=sc==='d'?db.days[key]:db.weeks[key],a=rec&&rec.a&&rec.a[id],sv=document.getElementById('sv-'+id);
+    if(sv)sv.textContent=a?'Saved '+fmtT(a.at):'';
+  }else if(t.dataset&&t.dataset.note){
+    setNote(ui.date,t.value);
+    const d=db.days[ui.date],sv=document.getElementById('sv-note');
+    if(sv)sv.textContent=d&&d.n?'Saved '+fmtT(d.n.at):'';
+  }else if(t.id==='psearch')applySearch(t.value);
+});
+$('#filein').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>doImport(String(r.result||''));
+  r.onerror=()=>toast('Could not read that file');
+  r.readAsText(f);
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden')flush();
+  else{
+    if(ui.tday!==today()){ui.tday=today();ui.date=today();ui.wk=wkStart(today());ui.tw=ui.wk;ui.mon=monStart(today())}
+    if(ui.route==='home')render();
+  }
+});
+window.addEventListener('pagehide',flush);
+
+/* ============ start ============ */
+function init(){
+  db=load();
+  ui.route=parseHash();
+  render(true);
+  const hero=$('#hero');
+  requestAnimationFrame(()=>hero.classList.add('in'));
+  setTimeout(()=>hero.classList.add('out'),1500);
+  setTimeout(()=>{if(hero.parentNode)hero.parentNode.removeChild(hero)},2500);
+  try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(e){}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+}
+window.__sd={ACT,go,render,ui,init,get db(){return db},set db(v){db=v},buildTXT,importText,computeReview,ctxFor,reviewStarts,vHome,unseenReview,addParam,setT,setAns,setNote,persist};
+/* offline + installable */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
+init();
+</script>
+</body>
+</html>
