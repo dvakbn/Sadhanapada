@@ -77,9 +77,10 @@ svg{display:block}
 .top-r{display:flex;gap:2px}
 .ib{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--ink2)}
 .ib:active{background:var(--fill)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 8px 6px;scrollbar-width:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 8px 6px;scrollbar-width:none;touch-action:pan-x}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:1px solid var(--line);background:var(--paper);color:var(--ink2);padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600}
+.chip{flex:none;border:1px solid var(--line);background:var(--paper);color:var(--ink2);padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;transition:background .12s,transform .12s}
+.chip:active{background:var(--fill);transform:scale(.96)}
 .chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .chip.sm{padding:5px 11px;font-size:13px}
 
@@ -110,8 +111,15 @@ svg{display:block}
 .sky{width:100%;height:auto;display:block;overflow:visible}
 .sky .arc{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:2 5;stroke-linecap:round}
 .sky .hz{stroke:var(--line);stroke-width:1.2}
-.sky .sun{fill:var(--amber)}
-.sky .moon{fill:var(--paper);stroke:var(--ink3);stroke-width:1.4}
+.sky .glow{opacity:.5;animation:skyBreathe 6s ease-in-out infinite alternate}
+.sky .rays{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.sky .disc{fill:currentColor}
+.sky .crescent{fill:currentColor}
+.sky .star{fill:#D7DEE2;opacity:.8;animation:starTwinkle 3.4s ease-in-out infinite alternate}
+.sky .star:nth-child(4){animation-delay:.4s}
+.sky .star:nth-child(5){animation-delay:1s}
+@keyframes skyBreathe{from{opacity:.32}to{opacity:.58}}
+@keyframes starTwinkle{from{opacity:.35}to{opacity:.9}}
 .greet{margin-top:6px;color:var(--ink2);font-size:15px}
 .home-top h1{font:400 clamp(30px,8vw,38px)/1.15 var(--serif);margin-top:2px;letter-spacing:.005em}
 .rows{display:grid;gap:12px;margin:14px 0 18px}
@@ -145,7 +153,12 @@ svg{display:block}
 .qt{font:400 19px/1.35 var(--serif);display:block;letter-spacing:.005em}
 .qs2{font:400 17px/1.4 var(--serif);display:block}
 .qs2 i{font-style:normal;color:var(--ink3);margin-right:2px}
-.qh{font-size:13.5px;line-height:1.5;color:var(--ink3);margin:5px 0 8px}
+.qh{font-size:13.5px;line-height:1.5;color:var(--ink3);margin:6px 0 0}
+details.hint{margin-top:6px}
+details.hint summary{list-style:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);color:var(--ink3);font:700 11.5px var(--sans);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+details.hint summary::-webkit-details-marker{display:none}
+details.hint summary::marker{content:''}
+details.hint[open] summary{background:var(--fill);color:var(--ink2);border-color:transparent}
 .fld{margin-top:10px}
 .fld:first-child{margin-top:0}
 textarea,input[type=text],input[type=time]{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--paper);padding:12px 14px;font:400 16px/1.5 var(--sans);color:var(--ink);resize:none;outline:none;display:block;margin-top:8px}
@@ -1101,11 +1114,24 @@ function closeSheet(){
 }
 
 /* ============ home ============ */
+const RAYS='M10.5,0 L15.5,0 M7.4,7.4 L11,11 M0,10.5 L0,15.5 M-7.4,7.4 L-11,11 M-10.5,0 L-15.5,0 M-7.4,-7.4 L-11,-11 M0,-10.5 L0,-15.5 M7.4,-7.4 L11,-11';
+const CRESCENT='M9,.79A9,9 0 1 1 -.79,-9A7,7 0 0 0 9,.79Z';
+const hexLerp=(a,b,f)=>{
+  const pa=parseInt(a.replace('#',''),16),pb=parseInt(b.replace('#',''),16);
+  const c=(s)=>{const x=Math.round((((pa>>s)&255))+(((pb>>s)&255)-((pa>>s)&255))*f);return Math.max(0,Math.min(255,x))};
+  return '#'+[16,8,0].map(s=>c(s).toString(16).padStart(2,'0')).join('');
+};
+const phase3=(t,a,b,c)=>t<=.5?hexLerp(a,b,t/.5):hexLerp(b,c,(t-.5)/.5);
 function skySVG(){
   const n=new Date(),hr=n.getHours()+n.getMinutes()/60,day=hr>=5.5&&hr<19;
   const t=day?(hr-5.5)/13.5:((hr>=19?hr-19:hr+5)/10.5);
   const x=(1-t)*(1-t)*20+2*(1-t)*t*160+t*t*300,y=(1-t)*(1-t)*86+2*(1-t)*t*-26+t*t*86;
-  return '<svg class="sky" viewBox="0 0 320 100" aria-hidden="true"><line class="hz" x1="0" y1="86" x2="320" y2="86"/><path class="arc" d="M20 86 Q160 -26 300 86"/><circle class="'+(day?'sun':'moon')+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(day?7:6)+'"/></svg>';
+  const cv=nm=>getComputedStyle(document.documentElement).getPropertyValue(nm).trim()||'#C4913F';
+  const col=day?phase3(t,cv('--bark'),cv('--amber'),cv('--bark')):phase3(t,cv('--dusk'),cv('--stone'),cv('--dusk'));
+  const body=day?
+    '<g class="body sun" style="color:'+col+'" transform="translate('+x.toFixed(1)+','+y.toFixed(1)+')"><circle class="glow" r="21" fill="url(#skyGlow)"/><path class="rays" d="'+RAYS+'"/><circle class="disc" r="7.6"/></g>'
+    :'<g class="body moon" style="color:'+col+'" transform="translate('+x.toFixed(1)+','+y.toFixed(1)+') scale(.95)"><circle class="glow" r="18" fill="url(#skyGlow)"/><path class="crescent" d="'+CRESCENT+'"/><circle class="star" cx="18" cy="-12" r="1.1"/><circle class="star" cx="-16" cy="9" r="0.8"/><circle class="star" cx="11" cy="14" r="0.6"/></g>';
+  return '<svg class="sky" viewBox="0 0 320 100" aria-hidden="true"><defs><radialGradient id="skyGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="currentColor" stop-opacity=".55"/><stop offset="100%" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><line class="hz" x1="0" y1="86" x2="320" y2="86"/><path class="arc" d="M20 86 Q160 -26 300 86"/>'+body+'</svg>';
 }
 function vHome(){
   const now=new Date(),hr=now.getHours(),mins=hr*60+now.getMinutes(),t=today();
@@ -1138,7 +1164,7 @@ function vHome(){
 /* ============ parameters ============ */
 function field(scope,key,q,a,top){
   const v=a[q.id],id='q-'+q.id;
-  return '<div class="fld"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+(q.h?'<p class="qh">'+esc(q.h)+'</p>':'')+
+  return '<div class="fld"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+(q.h?'<details class="hint"><summary aria-label="Show hint">?</summary><p class="qh">'+esc(q.h)+'</p></details>':'')+
     '<textarea id="'+id+'" data-q="'+scope+':'+q.id+'" rows="2" placeholder="Write freely">'+esc(v?v.t:'')+'</textarea><div class="sv" id="sv-'+q.id+'">'+(v?'Saved '+esc(fmtT(v.at)):'')+'</div></div>';
 }
 function qCard(scope,key,q,rec){
@@ -1519,7 +1545,12 @@ const ACT={
   },
   suggest(a){const s=SUGGEST[+a.dataset.i];if(!s)return;addParam(s);render();toast(s.name+' added')},
   stab(a){ui.stab=a.dataset.v;render();window.scrollTo(0,0)},
-  jump(a){const e=document.getElementById('sec-'+a.dataset.id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},
+  jump(a){
+    const e=document.getElementById('sec-'+a.dataset.id);if(!e)return;
+    const top=$('.top',view),hh=top?top.getBoundingClientRect().height:96;
+    const y=e.getBoundingClientRect().top+window.pageYOffset-hh-14;
+    window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+  },
   async saveTxt(){if(await deliver(buildTXT())){markExported();render();toast('Journal saved')}},
   async shareTxt(){
     try{const f=new File([buildTXT()],'Sadhanapada-Journal.txt',{type:'text/plain'});await navigator.share({files:[f],title:'Sadhanapada journal'});markExported();render()}
