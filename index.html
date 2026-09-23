@@ -19,6 +19,8 @@
   --bark:#82624A; --lichen:#4E785C; --stone:#4A6B7C; --dusk:#6F5882; --amber:#A86D22;
   --t-bark:rgba(130,98,74,.14); --t-lichen:rgba(78,120,92,.14); --t-stone:rgba(74,107,124,.14); --t-dusk:rgba(111,88,130,.14); --t-amber:rgba(168,109,34,.14);
   --hi:#3B6B4C; --mid:#8C6E25; --lo:#6B5982; --warn:#96433E;
+  --grad-bg:radial-gradient(ellipse at 50% 0%, rgba(248, 245, 238, 0.7) 0%, rgba(223, 228, 220, 0.85) 100%);
+  --card-bg:linear-gradient(168deg, rgba(255,255,255,0.7) 0%, var(--paper) 100%);
   --ease:cubic-bezier(.22,.7,.2,1);
   --serif:'Marcellus',Georgia,'Times New Roman',serif;
   --sans:'Mulish',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
@@ -29,23 +31,27 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0F1617; --paper:#162022; --ink:#EDF2EC; --ink2:#B4C0BD; --ink3:#859492; --line:#2E3A3B; --line2:#253132; --fill:#222D2E;
-    --bark:#D4B69C; --lichen:#A3C0AA; --stone:#99B5C2; --dusk:#BCACC9; --amber:#EBB86C;
-    --t-bark:rgba(212,182,156,.18); --t-lichen:rgba(163,192,170,.18); --t-stone:rgba(153,181,194,.18); --t-dusk:rgba(188,172,201,.18); --t-amber:rgba(235,184,108,.18);
-    --hi:#A1D0B4; --mid:#EAC878; --lo:#C6B5D9; --warn:#E09B95;
+    --bg:#0F1719; --paper:#182427; --ink:#F3F7F2; --ink2:#C5D4CF; --ink3:#94A5A1; --line:#2B3B3E; --line2:#223032; --fill:#223134;
+    --bark:#E2C8B1; --lichen:#A2CBAF; --stone:#9BBAD0; --dusk:#CAB9D9; --amber:#F2C678;
+    --t-bark:rgba(226,200,177,.14); --t-lichen:rgba(162,203,175,.14); --t-stone:rgba(155,186,208,.14); --t-dusk:rgba(202,185,217,.14); --t-amber:rgba(242,198,120,.14);
+    --hi:#A2D6B6; --mid:#ECCF7C; --lo:#CBBDE0; --warn:#E8A39E;
+    --grad-bg:radial-gradient(ellipse at 50% 0%, rgba(28, 41, 44, 0.85) 0%, rgba(15, 23, 25, 0.95) 100%);
+    --card-bg:linear-gradient(168deg, rgba(28, 41, 44, 0.9) 0%, var(--paper) 100%);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0F1617; --paper:#162022; --ink:#EDF2EC; --ink2:#B4C0BD; --ink3:#859492; --line:#2E3A3B; --line2:#253132; --fill:#222D2E;
-  --bark:#D4B69C; --lichen:#A3C0AA; --stone:#99B5C2; --dusk:#BCACC9; --amber:#EBB86C;
-  --t-bark:rgba(212,182,156,.18); --t-lichen:rgba(163,192,170,.18); --t-stone:rgba(153,181,194,.18); --t-dusk:rgba(188,172,201,.18); --t-amber:rgba(235,184,108,.18);
-  --hi:#A1D0B4; --mid:#EAC878; --lo:#C6B5D9; --warn:#E09B95;
+  --bg:#0F1719; --paper:#182427; --ink:#F3F7F2; --ink2:#C5D4CF; --ink3:#94A5A1; --line:#2B3B3E; --line2:#223032; --fill:#223134;
+  --bark:#E2C8B1; --lichen:#A2CBAF; --stone:#9BBAD0; --dusk:#CAB9D9; --amber:#F2C678;
+  --t-bark:rgba(226,200,177,.14); --t-lichen:rgba(162,203,175,.14); --t-stone:rgba(155,186,208,.14); --t-dusk:rgba(202,185,217,.14); --t-amber:rgba(242,198,120,.14);
+  --hi:#A2D6B6; --mid:#ECCF7C; --lo:#CBBDE0; --warn:#E8A39E;
+  --grad-bg:radial-gradient(ellipse at 50% 0%, rgba(28, 41, 44, 0.85) 0%, rgba(15, 23, 25, 0.95) 100%);
+  --card-bg:linear-gradient(168deg, rgba(28, 41, 44, 0.9) 0%, var(--paper) 100%);
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none !important}
-html{background:var(--bg);background-image:radial-gradient(ellipse at 50% 0%, rgba(248, 245, 238, 0.7) 0%, rgba(223, 228, 220, 0.85) 100%);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
+html{background:var(--bg);background-image:var(--grad-bg);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
 body{margin:0;background:transparent;color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-tap-highlight-color:transparent;min-height:100vh}
 button{font:inherit;color:inherit;cursor:pointer}
 h1,h2,h3,h4,p{margin:0}
@@ -160,8 +166,8 @@ svg{display:block}
     border-color: var(--line);
   }
   .card, .diary-card, .paper, .banner {
-    background: linear-gradient(168deg, rgba(255,255,255,0.7) 0%, var(--paper) 100%);
-    box-shadow: 0 4px 18px -2px rgba(29,38,40,0.04), 0 1px 3px rgba(0,0,0,0.02);
+    background: var(--card-bg);
+    box-shadow: 0 4px 18px -2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
   }
   .card:hover, .pcard:hover, .diary-card:hover, .banner:hover {
     transform: translateY(-2px);
