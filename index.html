@@ -153,7 +153,11 @@ svg{display:block}
 .qt{font:400 19px/1.35 var(--serif);display:block;letter-spacing:.005em}
 .qs2{font:400 17px/1.4 var(--serif);display:block}
 .qs2 i{font-style:normal;color:var(--ink3);margin-right:2px}
-.qh{font-size:13.5px;line-height:1.5;color:var(--ink3);margin:6px 0 0}
+.qlbl{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.qlbl label{flex:1;min-width:0}
+.qhint{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink3);font:700 12px var(--sans);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;margin-top:2px;transition:background .15s,color .15s,border-color .15s}
+.qhint:active,.qhint.on{background:var(--fill);color:var(--ink);border-color:transparent}
+.qh{font-size:13.5px;line-height:1.5;color:var(--ink3);margin:6px 0 2px;padding:8px 12px;border-radius:10px;background:var(--fill)}
 details.hint{margin-top:6px}
 details.hint summary{list-style:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);color:var(--ink3);font:700 11.5px var(--sans);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
 details.hint summary::-webkit-details-marker{display:none}
@@ -1164,7 +1168,9 @@ function vHome(){
 /* ============ parameters ============ */
 function field(scope,key,q,a,top){
   const v=a[q.id],id='q-'+q.id;
-  return '<div class="fld"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+(q.h?'<details class="hint"><summary aria-label="Show hint">?</summary><p class="qh">'+esc(q.h)+'</p></details>':'')+
+  return '<div class="fld"><div class="qlbl"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+
+    (q.h?'<button type="button" class="qhint" data-act="togHint" data-id="'+id+'" aria-label="Show hint">?</button>':'')+'</div>'+
+    (q.h?'<p class="qh" id="h-'+id+'" hidden>'+esc(q.h)+'</p>':'')+
     '<textarea id="'+id+'" data-q="'+scope+':'+q.id+'" rows="2" placeholder="Write freely">'+esc(v?v.t:'')+'</textarea><div class="sv" id="sv-'+q.id+'">'+(v?'Saved '+esc(fmtT(v.at)):'')+'</div></div>';
 }
 function qCard(scope,key,q,rec){
@@ -1257,7 +1263,7 @@ function tMonth(ps){
   });
   c+='</div>';
   const n=range(ms,me).filter(hasData).length,d=pk(ms);
-  return dnav(MON[d.getMonth()]+' '+d.getFullYear(),'','tmon',ms<monStart(t))+c+'<div class="legend"><span><i></i>Share of trackers recorded</span><span><i class="b"></i>Reflection answered</span></div><p class="stat">'+plural(n,'day')+' recorded in '+MON[d.getMonth()]+'</p>';
+  return dnav(MON[d.getMonth()]+' '+d.getFullYear(),'','tmon',ms<monStart(t))+c+'<div class="legend"><span><i></i>Share of trackers recorded</span><span><i class="b"></i>Reflection answered</span></div><p class="stat">'+plural(n,'day')+' recorded in '+MON[d.getMonth()]+'</p>'+remindersCardHTML();
 }
 function emptyTracker(){
   return '<div class="empty"><h2>Make it your own</h2><p>Choose what you want to track. Each one can be recorded in its own way: a tick, a mood, a star, a rating, your own symbols or a count.</p></div><div class="sugg">'+SUGGEST.map((s,i)=>'<button class="chip" data-act="suggest" data-i="'+i+'">'+esc(s.name)+' <span style="opacity:.6">('+TYPES[s.type].toLowerCase()+')</span></button>').join('')+'</div><div class="btns" style="justify-content:center"><button class="btn pri" data-act="addP">'+IC.plus+' Add my own</button></div>';
@@ -1390,6 +1396,82 @@ function vReview(kind,start){
   return h;
 }
 
+/* ============ reminders & calendar ============ */
+const REMINDERS=[
+  {id:'daily',title:'Sadhanapada: Daily Reflection',label:'Daily reflection',desc:'Every day, 8:30 PM',details:'Time for your daily Sadhanapada reflection and parameter journaling.',hour:20,minute:30,durationMins:30,recur:'RRULE:FREQ=DAILY'},
+  {id:'weekly',title:'Sadhanapada: Weekly Reflection',label:'Weekly reflection',desc:'Sunday, 9:00 PM',details:'Time for your weekly Sadhanapada reflection and Seva questions.',hour:21,minute:0,durationMins:30,recur:'RRULE:FREQ=WEEKLY;BYDAY=SU'},
+  {id:'wreview',title:'Sadhanapada: Weekly Review',label:'Weekly review',desc:'Sunday, 9:30 PM',details:'Your weekly Sadhanapada review is ready in the app.',hour:21,minute:30,durationMins:30,recur:'RRULE:FREQ=WEEKLY;BYDAY=SU'},
+  {id:'mreview',title:'Sadhanapada: Monthly Review',label:'Monthly review',desc:'Last day of month, 9:30 PM',details:'Your monthly Sadhanapada review is ready in the app.',hour:21,minute:30,durationMins:30,recur:'RRULE:FREQ=MONTHLY'}
+];
+function getReminderDates(rem,now=new Date()){
+  let start=new Date(now);
+  start.setSeconds(0);start.setMilliseconds(0);
+  if(rem.id==='daily'){
+    start.setHours(rem.hour,rem.minute,0,0);
+    if(now>=start)start.setDate(start.getDate()+1);
+  }else if(rem.id==='weekly'||rem.id==='wreview'){
+    const day=now.getDay(),diff=(7-day)%7;
+    start.setDate(now.getDate()+diff);
+    start.setHours(rem.hour,rem.minute,0,0);
+    if(diff===0&&now>=start)start.setDate(start.getDate()+7);
+  }else if(rem.id==='mreview'){
+    start=new Date(now.getFullYear(),now.getMonth()+1,0,rem.hour,rem.minute,0,0);
+    if(now>=start)start=new Date(now.getFullYear(),now.getMonth()+2,0,rem.hour,rem.minute,0,0);
+  }
+  const end=new Date(start.getTime()+rem.durationMins*60*1000);
+  const fmt=d=>d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';
+  return {start,end,startStr:fmt(start),endStr:fmt(end)};
+}
+function googleCalUrl(rem){
+  const {startStr,endStr}=getReminderDates(rem);
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(rem.title)+
+    '&dates='+startStr+'/'+endStr+
+    '&details='+encodeURIComponent(rem.details)+
+    '&recur='+encodeURIComponent(rem.recur);
+}
+function buildICS(rems=REMINDERS){
+  const now=new Date(),dtstamp=now.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Sadhanapada//Reminders//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  rems.forEach(r=>{
+    const {startStr,endStr}=getReminderDates(r,now);
+    lines.push(
+      'BEGIN:VEVENT',
+      'UID:'+r.id+'-reminder@sadhanapada.app',
+      'DTSTAMP:'+dtstamp,
+      'SUMMARY:'+r.title,
+      'DESCRIPTION:'+r.details,
+      'DTSTART:'+startStr,
+      'DTEND:'+endStr,
+      r.recur,
+      'BEGIN:VALARM',
+      'TRIGGER:-PT0M',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:'+r.title,
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+async function downloadICS(content,filename='sadhanapada-reminders.ics'){
+  try{
+    const blob=new Blob([content],{type:'text/calendar;charset=utf-8'});
+    const u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),4000);
+    return true;
+  }catch(e){}
+  return false;
+}
+function remindersCardHTML(){
+  const items=REMINDERS.map(r=>'<div class="kv" style="align-items:center;padding:10px 0"><div><b>'+esc(r.label)+'</b><small style="display:block;color:var(--ink3);margin-top:2px">'+esc(r.desc)+'</small></div>'+
+    '<a class="btn sm" href="'+esc(googleCalUrl(r))+'" target="_blank" rel="noopener" data-act="addCal" data-id="'+r.id+'" style="padding:6px 12px;font-size:13px;flex:none;margin-left:8px;text-decoration:none">'+IC.bell+' Add to Calendar</a></div>').join('');
+  return '<div class="card" style="margin-top:18px"><h3>Reminders</h3>'+items+
+    '<div class="btns" style="margin-top:14px"><button class="btn pri sm" data-act="addCalAll">'+IC.bell+' Add all reminders to Calendar (.ics)</button></div>'+
+    '<p class="muted small" style="margin-top:10px">Click <b>Add to Calendar</b> on any reminder to open it directly in Google Calendar with date, time and repetition pre-filled — only click <b>Save</b> to confirm. Or download the .ics file to add all reminders at once to any calendar app.</p></div>';
+}
+
 /* ============ backup ============ */
 function vBackup(){
   const nDays=Object.keys(db.days).filter(hasData).length;
@@ -1402,7 +1484,7 @@ function vBackup(){
     '<p class="muted small" style="margin:12px 2px">Everything lives in one text file. Each day is added below the previous one, with the newest at the bottom. The file always has the same name, so save over the older copy and keep it somewhere safe, like Google Drive or Files. That copy stays with you even if the app is removed.</p>'+
     '<div class="btns"><button class="btn pri" data-act="saveTxt">'+IC.save+' Save journal file</button>'+(canShare?'<button class="btn" data-act="shareTxt">Share</button>':'')+'<button class="btn" data-go="journal">'+IC.eye+' Read it</button><button class="btn" data-act="copyTxt">'+IC.copy+' Copy</button></div>'+
     '<div class="card"><h3>Restore</h3><p>Bring everything back from a saved journal file, for example after reinstalling. Entries already here are kept, and the newer version of any day wins.</p><div class="btns"><button class="btn sm" data-act="pickFile">'+IC.upload+' Choose file</button><button class="btn sm" data-act="pasteRestore">Paste text</button></div></div>'+
-    '<div class="card"><h3>Reminders</h3><div class="kv"><span>Daily reflection</span><span>Every day, 8:30 PM</span></div><div class="kv"><span>Weekly reflection</span><span>Sunday, 9:00 PM</span></div><div class="kv"><span>Weekly review</span><span>Sunday, 9:30 PM</span></div><div class="kv"><span>Monthly review</span><span>Last day, 9:30 PM</span></div><p style="margin-top:8px">A web app cannot wake itself in the background, so these alerts come from your phone’s Calendar. This screen only lists the times. When you open the app after a time has passed, a gentle prompt appears on Home.</p></div>'+
+    remindersCardHTML()+
     '<div class="card"><h3>Where your data lives</h3><p>'+(storageOK?'Saved automatically on this device, in this browser only. Nothing is sent anywhere.':'This browser is blocking storage. Save your journal file often.')+'</p></div>'+
     '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
 }
@@ -1482,6 +1564,21 @@ function doImport(text){
 }
 
 const ACT={
+  togHint(a){
+    const el=document.getElementById('h-'+a.dataset.id);
+    if(el){
+      el.hidden=!el.hidden;
+      a.classList.toggle('on',!el.hidden);
+    }
+  },
+  addCal(a){
+    toast('Opening Calendar... Tap Save to confirm');
+  },
+  addCalAll(){
+    const ics=buildICS();
+    downloadICS(ics);
+    toast('Calendar file downloaded — open to save all reminders');
+  },
   ptab(a){ui.ptab=a.dataset.v;render()},
   pdate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
   pwk(a){const n=addD(ui.wk,7*a.dataset.d);if(n>wkStart(today()))return;ui.wk=n;render()},
