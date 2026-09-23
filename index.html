@@ -15,10 +15,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#E4E8E1; --paper:#EFF2EC; --ink:#1D2628; --ink2:#4A5657; --ink3:#727E82; --line:#C2C8BE; --line2:#D4DAD1; --fill:#D8DFD5;
-  --bark:#8A725D; --lichen:#698571; --stone:#5B7785; --dusk:#7C6C8C; --amber:#B88132;
-  --t-bark:rgba(138,114,93,.15); --t-lichen:rgba(105,133,113,.16); --t-stone:rgba(91,119,133,.15); --t-dusk:rgba(124,108,140,.15); --t-amber:rgba(184,129,50,.16);
-  --hi:#4C7B5D; --mid:#9A7B2C; --lo:#7B6A90; --warn:#9A4F4A;
+  --bg:#DFE4DC; --paper:#F4F6F1; --ink:#1A2526; --ink2:#3E4C4E; --ink3:#697779; --line:#B8C2B4; --line2:#CDD6C9; --fill:#D0D9CC;
+  --bark:#82624A; --lichen:#4E785C; --stone:#4A6B7C; --dusk:#6F5882; --amber:#A86D22;
+  --t-bark:rgba(130,98,74,.14); --t-lichen:rgba(78,120,92,.14); --t-stone:rgba(74,107,124,.14); --t-dusk:rgba(111,88,130,.14); --t-amber:rgba(168,109,34,.14);
+  --hi:#3B6B4C; --mid:#8C6E25; --lo:#6B5982; --warn:#96433E;
   --ease:cubic-bezier(.22,.7,.2,1);
   --serif:'Marcellus',Georgia,'Times New Roman',serif;
   --sans:'Mulish',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
@@ -29,23 +29,23 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#111718; --paper:#182021; --ink:#E9EDE8; --ink2:#AFB9B6; --ink3:#808E8C; --line:#2A3435; --line2:#222C2C; --fill:#202829;
-    --bark:#C2A992; --lichen:#9CB3A3; --stone:#92ACB8; --dusk:#B2A3BF; --amber:#E2AE5F;
-    --t-bark:rgba(194,169,146,.16); --t-lichen:rgba(156,179,163,.17); --t-stone:rgba(146,172,184,.16); --t-dusk:rgba(178,163,191,.16); --t-amber:rgba(226,174,95,.17);
-    --hi:#93C4A8; --mid:#E0BF70; --lo:#BAA8CE; --warn:#D9928C;
+    --bg:#0F1617; --paper:#162022; --ink:#EDF2EC; --ink2:#B4C0BD; --ink3:#859492; --line:#2E3A3B; --line2:#253132; --fill:#222D2E;
+    --bark:#D4B69C; --lichen:#A3C0AA; --stone:#99B5C2; --dusk:#BCACC9; --amber:#EBB86C;
+    --t-bark:rgba(212,182,156,.18); --t-lichen:rgba(163,192,170,.18); --t-stone:rgba(153,181,194,.18); --t-dusk:rgba(188,172,201,.18); --t-amber:rgba(235,184,108,.18);
+    --hi:#A1D0B4; --mid:#EAC878; --lo:#C6B5D9; --warn:#E09B95;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#111718; --paper:#182021; --ink:#E9EDE8; --ink2:#AFB9B6; --ink3:#808E8C; --line:#2A3435; --line2:#222C2C; --fill:#202829;
-  --bark:#C2A992; --lichen:#9CB3A3; --stone:#92ACB8; --dusk:#B2A3BF; --amber:#E2AE5F;
-  --t-bark:rgba(194,169,146,.16); --t-lichen:rgba(156,179,163,.17); --t-stone:rgba(91,119,133,.15); --t-dusk:rgba(178,163,191,.16); --t-amber:rgba(226,174,95,.17);
-  --hi:#93C4A8; --mid:#E0BF70; --lo:#BAA8CE; --warn:#D9928C;
+  --bg:#0F1617; --paper:#162022; --ink:#EDF2EC; --ink2:#B4C0BD; --ink3:#859492; --line:#2E3A3B; --line2:#253132; --fill:#222D2E;
+  --bark:#D4B69C; --lichen:#A3C0AA; --stone:#99B5C2; --dusk:#BCACC9; --amber:#EBB86C;
+  --t-bark:rgba(212,182,156,.18); --t-lichen:rgba(163,192,170,.18); --t-stone:rgba(153,181,194,.18); --t-dusk:rgba(188,172,201,.18); --t-amber:rgba(235,184,108,.18);
+  --hi:#A1D0B4; --mid:#EAC878; --lo:#C6B5D9; --warn:#E09B95;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none !important}
-html{background:var(--bg);background-image:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.45) 0%, transparent 75%);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
+html{background:var(--bg);background-image:radial-gradient(ellipse at 50% 0%, rgba(248, 245, 238, 0.7) 0%, rgba(223, 228, 220, 0.85) 100%);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
 body{margin:0;background:transparent;color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-tap-highlight-color:transparent;min-height:100vh}
 button{font:inherit;color:inherit;cursor:pointer}
 h1,h2,h3,h4,p{margin:0}
@@ -183,9 +183,9 @@ svg{display:block}
 .greet{margin-top:6px;color:var(--ink2);font-size:15px}
 .home-top h1{font:400 clamp(30px,8vw,38px)/1.15 var(--serif);margin-top:2px;letter-spacing:.005em}
 .rows{display:grid;gap:12px;margin:14px 0 18px}
-.row{--a:var(--bark);--t:var(--t-bark);display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:15px 18px;border-radius:22px;border:1px solid var(--line2);background:var(--t);transition:transform .15s var(--ease)}
+.row{--a:var(--bark);--t:var(--t-bark);display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:15px 18px;border-radius:22px;border:1px solid var(--line2);border-left:4px solid var(--a);background:var(--t);transition:transform .15s var(--ease), box-shadow .2s ease, border-color .2s ease}
 .row:active{transform:scale(.985)}
-.ric{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--a);background:var(--paper);border:1px solid var(--line2)}
+.ric{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:var(--a);background:var(--paper);border:1px solid var(--a);box-shadow:0 2px 8px rgba(0,0,0,0.04)}
 .rt{flex:1;min-width:0}
 .rt b{display:block;font:400 20px/1.25 var(--serif);letter-spacing:.005em}
 .rt small{display:block;color:var(--ink2);font-size:13.5px;line-height:1.35;margin-top:1px}
