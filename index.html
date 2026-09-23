@@ -197,6 +197,7 @@ svg{display:block}
 .c-practices{--a:var(--stone);--t:var(--t-stone)}
 .c-notes{--a:var(--dusk);--t:var(--t-dusk)}
 .c-yoga{--a:var(--stone);--t:var(--t-stone)}
+.c-angamardhana{--a:var(--bark);--t:var(--t-bark)}
 .c-shakti{--a:var(--dusk);--t:var(--t-dusk)}
 .c-surya{--a:var(--amber);--t:var(--t-amber)}
 .privacy-badge{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--t-lichen);color:var(--ink2);font-size:13.5px;line-height:1.4;margin:12px 0}
@@ -835,6 +836,55 @@ PRACTICE.shakti={
       {k:'ul',items:['Somewhat tired','Somewhat hungry','No expectations from meditation','No reaction to external and internal situations']},
       {k:'p',t:'Sit, on a chair or on the ground, with your legs crossed, right ankle above left, and right palm above left palm, like Brahma Mudra.'},
       {k:'note',t:'During meditation, thoughts will come. Do not resist the thoughts, do not pursue a thought and do not create a thought.'}]}
+  ]
+};
+
+PRACTICE.angamardhana={
+  title:'Angamardhana',sub:'31 processes across standing, squatting, sitting, and lying down',
+  secs:[
+    {id:'standing',t:'A. Standing Processes',b:[{k:'asanas',items:[
+      A('1','Stretching Upward','',''),
+      A('2','Bending Forward','',''),
+      A('3','Bending Forward - Legs Crossed','',''),
+      A('4','Bending Forward - Feet Apart','',''),
+      A('5','Bending Sideways - Feet Apart 6 Hand Postures','',''),
+      A('6','Stretching Sideways - One Arm Raised','',''),
+      A('7','Stretching Sideways - Clasping Wrist','','')
+    ]}]},
+    {id:'squatting',t:'B. Squatting Processes',b:[{k:'asanas',items:[
+      A('8','Straighten Leg to Front','',''),
+      A('9','Straighten Leg to Side','',''),
+      A('10','Straighten Both Legs and Stand','',''),
+      A('11','One Leg Stretched to Side Up on 2 Hands','',''),
+      A('12','One Leg Stretched to Side Up on 1 Hand','',''),
+      A('13','Jumping','',''),
+      A('14','Push Ups','',''),
+      A('15','Balasana','','')
+    ]}]},
+    {id:'sitting',t:'C. Sitting Processes',b:[{k:'asanas',items:[
+      A('16','Single Leg Raised in Front','',''),
+      A('17','Both Legs and Arms Raised in Front','',''),
+      A('18','Legs Straightened Holding Big Toes','',''),
+      A('19','Legs Apart Bending Sideways 6 Hand Postures','',''),
+      A('20','Veerasana','','')
+    ]}]},
+    {id:'lying',t:'D. Lying Down Processes',b:[{k:'asanas',items:[
+      A('21','Knee to Forehead','',''),
+      A('22','Rocking','',''),
+      A('23','Chair Twisting','',''),
+      A('24','Spine Curved Twisting','',''),
+      A('25','45-Degrees and Legs to Side Twisting','',''),
+      A('26','One Leg to Side Twisting','',''),
+      A('27','Knee to Elbow','',''),
+      A('28','Veerabhadrasana','',''),
+      A('29','Shavasana','',''),
+      A('30','Kundalini Kriya','',''),
+      A('31','Dhyan','','')
+    ]}]},
+    {id:'notes',t:'Notes',b:[{k:'ul',items:[
+      'To be practiced on an empty stomach: 4 hours after a full meal, 2.5 hours after a snack, 1.5 hours after a beverage (except water).',
+      'Perform processes with awareness, proper breath, and form as instructed.'
+    ]}]}
   ]
 };
 
@@ -1518,7 +1568,7 @@ function vHome(){
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
     row('c-guided','guided',IC.audio,'Guided Yogasanas','Starts from Padahastasana (do Nadi Vibhajan first)'),
-    row('c-practices','practices',IC.mountain,'Practices guidance','Yogasanas, Shakti Chalana & Surya Kriya'),
+    row('c-practices','practices',IC.mountain,'Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
     row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes')
   ].join('');
   const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
@@ -1529,6 +1579,7 @@ function vPractices(){
   const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
   const cards=[
     row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles and preparations'),
+    row('c-angamardhana','angamardhana',IC.leaf,'Angamardhana','31 processes in standing, squatting, sitting & lying down'),
     row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
     row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti instructions')
   ].join('');
@@ -2247,7 +2298,7 @@ function render(anim){
       case 'guided':h=vGuided();break;
       case 'practices':h=vPractices();break;
       case 'notes':h=vNotes();break;
-      case 'yoga':case 'shakti':case 'surya':h=vPractice(a);break;
+      case 'yoga':case 'angamardhana':case 'shakti':case 'surya':h=vPractice(a);break;
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
       case 'backup':h=vBackup();break;
