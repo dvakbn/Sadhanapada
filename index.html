@@ -133,6 +133,7 @@ svg{display:block}
 .row .chev svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .c-params{--a:var(--bark);--t:var(--t-bark)}
 .c-track{--a:var(--lichen);--t:var(--t-lichen)}
+.c-guided{--a:var(--hi);--t:var(--t-lichen)}
 .c-yoga{--a:var(--stone);--t:var(--t-stone)}
 .c-shakti{--a:var(--dusk);--t:var(--t-dusk)}
 .c-surya{--a:var(--amber);--t:var(--t-amber)}
@@ -468,7 +469,12 @@ const IC={
   eye:S('<path d="M2.500 12S6 6 12 6s9.500 6 9.500 6-3.500 6-9.500 6-9.500-6-9.500-6z"/><circle cx="12" cy="12" r="2.500"/>'),
   upload:S('<path d="M12 16V5M7.500 9.500L12 5l4.500 4.500M5 19.500h14"/>'),
   bell:S('<path d="M6 16.500V11a6 6 0 0 1 12 0v5.500l1.500 1.500h-15zM10 20.500a2 2 0 0 0 4 0"/>'),
-  search:S('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>')
+  search:S('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>'),
+  audio:S('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
+  play:S('<path d="M8 5v14l11-7z" fill="currentColor"/>'),
+  pause:S('<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>'),
+  replay10:S('<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="12" y="14" font-size="6.5" font-weight="bold" text-anchor="middle" fill="currentColor" stroke="none">10</text>'),
+  forward10:S('<path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/><text x="12" y="14" font-size="6.5" font-weight="bold" text-anchor="middle" fill="currentColor" stroke="none">10</text>')
 };
 
 /* ============ questions (from the Parameters PDF) ============ */
@@ -1157,6 +1163,7 @@ function vHome(){
   const rows=[
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
+    row('c-guided','guided',IC.audio,'Guided Yogasanas','Guided audio session for sadhakas'),
     row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles'),
     row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
     row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti')
@@ -1492,6 +1499,273 @@ function vJournal(){
   return hdr('Journal',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
 }
 
+/* ============ guided audio player ============ */
+let guidedAudio=null;
+let wakeLock=null;
+
+async function reqWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+    }
+  }catch(e){}
+}
+
+function relWakeLock(){
+  if(wakeLock){
+    wakeLock.release().catch(()=>{});
+    wakeLock=null;
+  }
+}
+
+function getGuidedAudio(){
+  if(!guidedAudio){
+    guidedAudio=new Audio('Guided_Yogasanas.mp3');
+    guidedAudio.preload='metadata';
+    guidedAudio.playsInline=true;
+
+    guidedAudio.addEventListener('play',()=>{
+      setupMediaSession();
+      updateGuidedUI();
+      reqWakeLock();
+    });
+
+    guidedAudio.addEventListener('pause',()=>{
+      updateGuidedUI();
+      relWakeLock();
+    });
+
+    guidedAudio.addEventListener('timeupdate',()=>{
+      updateGuidedUIProgress();
+      updateMediaSessionPosition();
+    });
+
+    guidedAudio.addEventListener('ended',()=>{
+      updateGuidedUI();
+      relWakeLock();
+    });
+
+    guidedAudio.addEventListener('loadedmetadata',()=>{
+      updateGuidedUI();
+    });
+
+    guidedAudio.addEventListener('error',(e)=>{
+      console.error("Audio playback error",e);
+      toast("Could not load audio. Please check Guided_Yogasanas.mp3.");
+      updateGuidedUI();
+    });
+  }
+  return guidedAudio;
+}
+
+function setupMediaSession(){
+  if(!('mediaSession' in navigator))return;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title:'Guided Yogasanas',
+      artist:'Sadhanapada',
+      album:'Sadhguru Gurukulam',
+      artwork:[
+        {src:'icon-192.png',sizes:'192x192',type:'image/png'},
+        {src:'icon-512.png',sizes:'512x512',type:'image/png'}
+      ]
+    });
+
+    navigator.mediaSession.setActionHandler('play',()=>{
+      const a=getGuidedAudio();
+      a.play().catch(()=>{});
+    });
+    navigator.mediaSession.setActionHandler('pause',()=>{
+      const a=getGuidedAudio();
+      a.pause();
+    });
+    navigator.mediaSession.setActionHandler('seekbackward',(details)=>{
+      const a=getGuidedAudio();
+      const skip=details.seekOffset||10;
+      a.currentTime=Math.max(0,a.currentTime-skip);
+    });
+    navigator.mediaSession.setActionHandler('seekforward',(details)=>{
+      const a=getGuidedAudio();
+      const skip=details.seekOffset||10;
+      a.currentTime=Math.min(a.duration||0,a.currentTime+skip);
+    });
+    navigator.mediaSession.setActionHandler('seekto',(details)=>{
+      const a=getGuidedAudio();
+      if(details.seekTime!=null&&!isNaN(details.seekTime)){
+        a.currentTime=details.seekTime;
+      }
+    });
+    navigator.mediaSession.setActionHandler('stop',()=>{
+      const a=getGuidedAudio();
+      a.pause();
+      a.currentTime=0;
+    });
+  }catch(e){}
+}
+
+function updateMediaSessionPosition(){
+  if(!('mediaSession' in navigator)||!navigator.mediaSession.setPositionState)return;
+  const a=getGuidedAudio();
+  if(a&&a.duration&&!isNaN(a.duration)&&isFinite(a.duration)){
+    try{
+      navigator.mediaSession.setPositionState({
+        duration:a.duration,
+        playbackRate:a.playbackRate||1,
+        position:Math.min(a.currentTime,a.duration)
+      });
+    }catch(e){}
+  }
+}
+
+function fmtSecs(s){
+  if(isNaN(s)||s===null||!isFinite(s))return '0:00';
+  const m=Math.floor(s/60);
+  const sec=Math.floor(s%60);
+  return m+':'+pad(sec);
+}
+
+function updateGuidedUIProgress(){
+  const seekEl=document.getElementById('guided-seek');
+  const curEl=document.getElementById('guided-cur');
+  const a=guidedAudio;
+  if(!a)return;
+
+  if(curEl)curEl.textContent=fmtSecs(a.currentTime);
+  if(seekEl&&a.duration&&!isNaN(a.duration)&&a.duration>0){
+    if(!seekEl.dataset.dragging){
+      seekEl.value=Math.floor((a.currentTime/a.duration)*100);
+    }
+  }
+}
+
+function updateGuidedUI(){
+  if(ui.route!=='guided')return;
+  const btnPlay=document.getElementById('guided-btn-play');
+  const durEl=document.getElementById('guided-dur');
+  const statusEl=document.getElementById('guided-status');
+  const speedBtn=document.getElementById('guided-speed-btn');
+  const a=guidedAudio;
+
+  if(btnPlay){
+    if(a&&!a.paused&&!a.ended){
+      btnPlay.innerHTML=IC.pause;
+      btnPlay.setAttribute('aria-label','Pause Guided Yogasanas');
+    }else{
+      btnPlay.innerHTML=IC.play;
+      btnPlay.setAttribute('aria-label','Play Guided Yogasanas');
+    }
+  }
+
+  if(durEl&&a&&a.duration&&!isNaN(a.duration)&&isFinite(a.duration)){
+    durEl.textContent=fmtSecs(a.duration);
+  }
+
+  if(speedBtn&&a){
+    speedBtn.textContent=(a.playbackRate||1)+'x';
+  }
+
+  if(statusEl){
+    if(a&&!a.paused&&!a.ended){
+      statusEl.textContent='Playing (continues in background when screen is off)';
+      statusEl.style.color='var(--hi)';
+    }else if(a&&a.ended){
+      statusEl.textContent='Completed';
+      statusEl.style.color='var(--ink3)';
+    }else if(a&&a.currentTime>0){
+      statusEl.textContent='Paused';
+      statusEl.style.color='var(--amber)';
+    }else{
+      statusEl.textContent='Ready to play';
+      statusEl.style.color='var(--ink3)';
+    }
+  }
+
+  updateGuidedUIProgress();
+}
+
+async function toggleGuidedPlay(){
+  const a=getGuidedAudio();
+  if(a.paused||a.ended){
+    try{
+      await a.play();
+    }catch(err){
+      console.error("Play failed:",err);
+      toast("Tap play again to start audio.");
+    }
+  }else{
+    a.pause();
+  }
+  updateGuidedUI();
+}
+
+function skipGuidedSecs(n){
+  const a=getGuidedAudio();
+  a.currentTime=Math.max(0,Math.min(a.duration||0,a.currentTime+n));
+  updateGuidedUIProgress();
+}
+
+function seekGuidedTo(percent){
+  const a=getGuidedAudio();
+  if(a&&a.duration&&!isNaN(a.duration)&&a.duration>0){
+    a.currentTime=(percent/100)*a.duration;
+    updateGuidedUIProgress();
+  }
+}
+
+function vGuided(){
+  const a=guidedAudio;
+  const isPlaying=a&&!a.paused&&!a.ended;
+  const curTime=a?fmtSecs(a.currentTime):'0:00';
+  const totalTime=(a&&a.duration&&!isNaN(a.duration)&&isFinite(a.duration))?fmtSecs(a.duration):'--:--';
+  const curSpeed=(a&&a.playbackRate)?a.playbackRate+'x':'1x';
+
+  return hdr('Guided Yogasanas',{back:'home'})+
+    '<main class="pg">'+
+      '<div class="card" style="margin-top:10px">'+
+        '<h3>Guided Practice</h3>'+
+        '<p style="margin-top:6px;color:var(--ink2);font-size:14.5px;line-height:1.55">'+
+          'A guided audio session where sadhakas can do yogasanas with step-by-step guidance. '+
+          'Once started, the audio will continue playing till the end even when your screen is off, so you can focus entirely on your practice.'+
+        '</p>'+
+      '</div>'+
+
+      '<div class="pcard" style="margin-top:16px;padding:20px;text-align:center;background:var(--paper);border:1px solid var(--line);border-radius:22px">'+
+        '<div style="font:400 22px/1.25 var(--serif);margin-bottom:6px;color:var(--ink)">Guided Yogasanas</div>'+
+        '<div id="guided-status" style="font-size:13.5px;font-weight:600;color:'+(isPlaying?'var(--hi)':'var(--ink3)')+';margin-bottom:16px">'+
+          (isPlaying?'Playing (continues in background when screen is off)':'Ready to play')+
+        '</div>'+
+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'+
+          '<span id="guided-cur" style="font-size:13px;color:var(--ink3);font-variant-numeric:tabular-nums;min-width:38px;text-align:right">'+curTime+'</span>'+
+          '<input type="range" id="guided-seek" min="0" max="100" value="0" style="flex:1;cursor:pointer;accent-color:var(--hi)" aria-label="Audio progress">'+
+          '<span id="guided-dur" style="font-size:13px;color:var(--ink3);font-variant-numeric:tabular-nums;min-width:38px;text-align:left">'+totalTime+'</span>'+
+        '</div>'+
+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:12px">'+
+          '<button class="ib" data-act="guidedRewind" aria-label="Rewind 10 seconds" style="width:48px;height:48px">'+IC.replay10+'</button>'+
+          '<button id="guided-btn-play" class="btn pri" data-act="guidedPlay" aria-label="'+(isPlaying?'Pause':'Play')+' Guided Yogasanas" style="width:64px;height:64px;border-radius:50%;padding:0;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,0.12)">'+
+            (isPlaying?IC.pause:IC.play)+
+          '</button>'+
+          '<button class="ib" data-act="guidedForward" aria-label="Forward 10 seconds" style="width:48px;height:48px">'+IC.forward10+'</button>'+
+        '</div>'+
+
+        '<div style="display:flex;justify-content:center;gap:10px;margin-top:10px">'+
+          '<button id="guided-speed-btn" class="chip sm" data-act="guidedSpeed" aria-label="Speed">'+curSpeed+'</button>'+
+          '<button class="chip sm" data-act="guidedReset" aria-label="Restart audio">Restart</button>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="card" style="margin-top:16px">'+
+        '<h3>Guidelines for Sadhakas</h3>'+
+        '<ul class="pul" style="margin-top:8px">'+
+          '<li>Ensure you are in a quiet space and have maintained the required empty stomach condition.</li>'+
+          '<li>You can lock your phone or turn off the screen; the guided instructions will keep playing continuously.</li>'+
+          '<li>Use the playback controls on your device lock screen or in the app if you need to pause or resume.</li>'+
+        '</ul>'+
+      '</div>'+
+    '</main>';
+}
+
 /* ============ router ============ */
 const parseHash=()=>{const h=(location.hash||'').replace(/^#\/?/,'');return h||'home'};
 function render(anim){
@@ -1500,6 +1774,7 @@ function render(anim){
     switch(a){
       case 'params':h=vParams();break;
       case 'tracker':h=parts[1]==='manage'?vManage():vTracker();break;
+      case 'guided':h=vGuided();break;
       case 'yoga':case 'shakti':case 'surya':h=vPractice(a);break;
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
@@ -1509,6 +1784,7 @@ function render(anim){
     }
   }catch(e){console.error(e);h='<main class="pg"><p style="padding-top:40px">Something went wrong while showing this page.</p><div class="btns"><button class="btn" data-go="home">Back to Home</button></div></main>'}
   view.innerHTML=h;
+  if(a==='guided')updateGuidedUI();
   if(anim){view.classList.remove('enter');void view.offsetWidth;view.classList.add('enter')}
   $$('textarea',view).forEach(autosize);
 }
@@ -1658,7 +1934,27 @@ const ACT={
   pasteRestore(){openSheet('<h2>Restore from text</h2><p class="sub">Paste the full contents of your journal file.</p><textarea id="paste-in" rows="6" placeholder="Paste here"></textarea><div class="btns" style="justify-content:space-between;margin-top:18px"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn pri" data-act="doPaste">Restore</button></div>')},
   doPaste(){const t=$('#paste-in');doImport(t?t.value:'')},
   wipe(){openSheet('<h2>Erase everything?</h2><p class="sub" style="margin-top:8px;font-size:14.5px">This removes every entry, tracker and review from this device. Save your journal file first if you want to keep a copy. This cannot be undone.</p><div class="btns" style="justify-content:space-between;margin-top:20px"><button class="btn" data-act="closeSheet">Keep my data</button><button class="btn warn" data-act="wipeYes">Erase</button></div>')},
-  wipeYes(){db=blank();flush();closeSheet();ui.date=today();go('home');toast('Everything was erased')}
+  wipeYes(){db=blank();flush();closeSheet();ui.date=today();go('home');toast('Everything was erased')},
+  guidedPlay(){toggleGuidedPlay()},
+  guidedRewind(){skipGuidedSecs(-10)},
+  guidedForward(){skipGuidedSecs(10)},
+  guidedSpeed(){
+    const a=getGuidedAudio();
+    const rates=[1,1.25,1.5,0.8];
+    const cur=a.playbackRate||1;
+    const idx=rates.indexOf(cur);
+    const next=rates[(idx+1)%rates.length];
+    a.playbackRate=next;
+    const speedBtn=document.getElementById('guided-speed-btn');
+    if(speedBtn)speedBtn.textContent=next+'x';
+    toast('Playback speed: '+next+'x');
+  },
+  guidedReset(){
+    const a=getGuidedAudio();
+    a.currentTime=0;
+    updateGuidedUIProgress();
+    toast('Audio restarted');
+  }
 };
 
 document.addEventListener('click',e=>{
@@ -1673,7 +1969,9 @@ document.addEventListener('input',e=>{
   const t=e.target;
   if(!t||!t.matches)return;
   if(t.matches('textarea'))autosize(t);
-  if(t.dataset&&t.dataset.q){
+  if(t.id==='guided-seek'){
+    seekGuidedTo(Number(t.value));
+  }else if(t.dataset&&t.dataset.q){
     const p=t.dataset.q.split(':'),sc=p[0],id=p[1],key=sc==='d'?ui.date:ui.wk;
     setAns(sc,key,id,t.value);
     const rec=sc==='d'?db.days[key]:db.weeks[key],a=rec&&rec.a&&rec.a[id],sv=document.getElementById('sv-'+id);
@@ -1683,6 +1981,24 @@ document.addEventListener('input',e=>{
     const d=db.days[ui.date],sv=document.getElementById('sv-note');
     if(sv)sv.textContent=d&&d.n?'Saved '+fmtT(d.n.at):'';
   }else if(t.id==='psearch')applySearch(t.value);
+});
+document.addEventListener('touchstart',e=>{
+  if(e.target&&e.target.id==='guided-seek')e.target.dataset.dragging='1';
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(e.target&&e.target.id==='guided-seek'){
+    delete e.target.dataset.dragging;
+    seekGuidedTo(Number(e.target.value));
+  }
+});
+document.addEventListener('mousedown',e=>{
+  if(e.target&&e.target.id==='guided-seek')e.target.dataset.dragging='1';
+});
+document.addEventListener('mouseup',e=>{
+  if(e.target&&e.target.id==='guided-seek'){
+    delete e.target.dataset.dragging;
+    seekGuidedTo(Number(e.target.value));
+  }
 });
 $('#filein').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0];e.target.value='';
@@ -1696,7 +2012,7 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden')flush();
   else{
     if(ui.tday!==today()){ui.tday=today();ui.date=today();ui.wk=wkStart(today());ui.tw=ui.wk;ui.mon=monStart(today())}
-    if(ui.route==='home')render();
+    if(ui.route==='home'||ui.route==='guided')render();
   }
 });
 window.addEventListener('pagehide',flush);
