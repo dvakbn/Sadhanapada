@@ -616,11 +616,11 @@ const mark=(p,v)=>{
 /* ============ storage (local first) ============ */
 const KEY='sadhanapada.v1';
 let storageOK=true, db=null, saveT=null;
-const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},notes:{},meta:{lastExport:null,dirty:false,seen:{}}});
+const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},notes:{},meta:{lastExport:null,dirty:false,seen:{},lastDismissedBackup:null,dismissedWelcomeBackup:false}});
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
-    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.notes=o.notes||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{}},o.meta||{});return o}
+    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.notes=o.notes||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{},lastDismissedBackup:null,dismissedWelcomeBackup:false},o.meta||{});return o}
   }catch(e){storageOK=false}
   return blank();
 }
@@ -1320,7 +1320,7 @@ const saveSoon=()=>{clearTimeout(saveT);saveT=setTimeout(persist,250)};
 const hdr=(title,o)=>{o=o||{};return '<header class="top"><div class="top-in"><button class="ib" data-go="'+(o.back||'home')+'" aria-label="Back">'+IC.back+'</button><h1>'+esc(title)+'</h1><div class="top-r">'+(o.right||'')+'</div></div>'+(o.sub||'')+'</header>'};
 const tabs=(items,cur,act)=>'<div class="seg" role="tablist">'+items.map(i=>'<button role="tab" class="'+(i[0]===cur?'on':'')+'" data-act="'+act+'" data-v="'+i[0]+'" aria-selected="'+(i[0]===cur)+'">'+esc(i[1])+'</button>').join('')+'</div>';
 const dnav=(main,sub,act,canNext)=>'<div class="dnav"><button class="ib" data-act="'+act+'" data-d="-1" aria-label="Previous">'+IC.back+'</button><div class="dl"><b>'+esc(main)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><button class="ib" data-act="'+act+'" data-d="1" aria-label="Next"'+(canNext?'':' disabled')+'>'+IC.chev+'</button></div>';
-const banner=(icon,html,label,route,act)=>'<div class="banner"><span class="ic" style="color:var(--amber)">'+icon+'</span><p>'+html+'</p><button class="btn sm" '+(act?'data-act="'+act+'"':'data-go="'+route+'"')+'>'+esc(label)+'</button></div>';
+const banner=(icon,html,label,route,act,dismissAct)=>'<div class="banner"><span class="ic" style="color:var(--amber)">'+icon+'</span><p>'+html+'</p><div style="display:flex;gap:6px;align-items:center;flex:none"><button class="btn sm" '+(act?'data-act="'+act+'"':'data-go="'+route+'"')+'>'+esc(label)+'</button>'+(dismissAct?'<button class="ib" data-act="'+dismissAct+'" aria-label="Dismiss" style="width:34px;height:34px;color:var(--ink3)">'+IC.x+'</button>':'')+'</div></div>';
 function autosize(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight+2,420)+'px'}
 function openSheet(inner){
   if(!sheet.firstChild)sheet.innerHTML='<div class="scrim" data-act="closeSheet"></div><div class="panel"></div>';
@@ -1560,9 +1560,17 @@ function vHome(){
   const ur=unseenReview();
   if(ur)bn.push(banner(IC.chart,'Your <b>'+(ur.kind==='w'?'weekly':'monthly')+' review</b> for '+esc(reviewTitle(ur.kind,ur.start))+' is ready.','Read','review/'+ur.kind+'/'+ur.start));
   const nDays=Object.keys(db.days).filter(hasData).length;
-  if(db.meta.dirty&&storageOK){
-    const last=db.meta.lastExport,ago=last?Math.floor((Date.now()-new Date(last))/864e5):null;
-    if((last===null&&nDays>=3)||(ago!==null&&ago>=7))bn.push(banner(IC.save,'<b>Save your journal file.</b> '+(last===null?'It is not backed up yet.':'Last saved '+ago+' days ago.'),'Backup','backup'));
+  if(storageOK){
+    const last=db.meta.lastExport, lastDismissed=db.meta.lastDismissedBackup;
+    const lastTime=Math.max(last?new Date(last).getTime():0, lastDismissed?new Date(lastDismissed).getTime():0);
+    const daysSinceLast=lastTime?Math.floor((Date.now()-lastTime)/864e5):1000;
+
+    if(!db.meta.dismissedWelcomeBackup && last===null){
+      bn.push(banner(IC.save,'<b>Your progress stays saved in this app for months.</b> You don\'t need to back up regularly, but you can save a backup file in case you uninstall the app or switch devices in the future.','Backup','backup',null,'dismissInstallBackup'));
+    } else if(db.meta.dirty && daysSinceLast>=14){
+      const ago=last?Math.floor((Date.now()-new Date(last))/864e5):null;
+      bn.push(banner(IC.save,'<b>Save your journal file.</b> Progress stays safe on this device, but a periodic backup is recommended. '+(ago!==null?'(Last saved '+ago+' days ago)':''),'Backup','backup',null,'dismissBackup'));
+    }
   }
   const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
   const rows=[
@@ -1573,7 +1581,7 @@ function vHome(){
     row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes')
   ].join('');
   const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
-  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.slice(0,2).join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
+  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
 }
 
 function vPractices(){
@@ -2006,7 +2014,7 @@ function vBackup(){
     '</div>'+
     remindersCardHTML()+
     '<div class="card" style="margin-top:14px"><h3>Where your data lives</h3>'+
-      '<p>'+(storageOK?'Saved automatically on this device in your local browser storage. No data is sent to any server.':'This browser is blocking storage. Save your TXT files often.')+'</p>'+
+      '<p>'+(storageOK?'Saved automatically on this device in your local browser storage. It stays saved for months without needing to back up. Backups are optional but recommended in case you uninstall the app or switch devices.':'This browser is blocking storage. Save your TXT files often.')+'</p>'+
     '</div>'+
     '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
 }
@@ -2376,6 +2384,21 @@ function doImport(text){
 }
 
 const ACT={
+  dismissBackup(){
+    db.meta=db.meta||{};
+    db.meta.lastDismissedBackup=nowISO();
+    touch();
+    render();
+    toast('Backup reminder dismissed for 2 weeks');
+  },
+  dismissInstallBackup(){
+    db.meta=db.meta||{};
+    db.meta.dismissedWelcomeBackup=true;
+    db.meta.lastDismissedBackup=nowISO();
+    touch();
+    render();
+    toast('Reminder dismissed');
+  },
   dismissPrivacyNotice(){
     db.meta=db.meta||{};
     db.meta.seenPrivacyNotice=true;
