@@ -107,10 +107,18 @@ svg{display:block}
 .linkbtn{background:none;border:0;padding:4px 2px;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;font-size:13.5px}
 
 /* ---------- home ---------- */
-.home-top{padding:20px 20px 14px;border-radius:0 0 24px 24px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:background 1s ease, color 1s ease;position:relative;overflow:hidden}
-.sky{width:100%;height:auto;display:block;overflow:visible;border-radius:16px}
-.sky .star{opacity:.85;animation:starTwinkle 3s ease-in-out infinite alternate}
-@keyframes starTwinkle{from{opacity:.25}to{opacity:.95}}
+.home-top{position:relative;padding:16px 20px 6px;overflow:hidden}
+.sky{width:100%;height:auto;display:block;overflow:visible;pointer-events:none}
+.sky .glow-outer{animation:skyBreathe 7s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
+.sky .glow-inner{animation:skyPulse 5s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
+.sky .star{animation:starTwinkle 3.2s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
+.sky .star:nth-child(2n){animation-delay:0.7s;animation-duration:4.1s}
+.sky .star:nth-child(3n){animation-delay:1.4s;animation-duration:2.8s}
+.sky .star:nth-child(5n){animation-delay:2.1s;animation-duration:3.6s}
+
+@keyframes skyBreathe{from{opacity:0.65;transform:scale(0.96)}to{opacity:0.95;transform:scale(1.05)}}
+@keyframes skyPulse{from{opacity:0.75}to{opacity:1.0}}
+@keyframes starTwinkle{from{opacity:0.25;transform:scale(0.85)}to{opacity:0.95;transform:scale(1.2)}}
 .greet{margin-top:6px;color:var(--ink2);font-size:15px}
 .home-top h1{font:400 clamp(30px,8vw,38px)/1.15 var(--serif);margin-top:2px;letter-spacing:.005em}
 .rows{display:grid;gap:12px;margin:14px 0 18px}
@@ -125,9 +133,12 @@ svg{display:block}
 .c-params{--a:var(--bark);--t:var(--t-bark)}
 .c-track{--a:var(--lichen);--t:var(--t-lichen)}
 .c-guided{--a:var(--hi);--t:var(--t-lichen)}
+.c-practices{--a:var(--stone);--t:var(--t-stone)}
+.c-notes{--a:var(--dusk);--t:var(--t-dusk)}
 .c-yoga{--a:var(--stone);--t:var(--t-stone)}
 .c-shakti{--a:var(--dusk);--t:var(--t-dusk)}
 .c-surya{--a:var(--amber);--t:var(--t-amber)}
+.privacy-badge{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--t-lichen);color:var(--ink2);font-size:13.5px;line-height:1.4;margin:12px 0}
 .minor{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .minor .row{padding:12px 14px;border-radius:18px;background:transparent;border:1px solid var(--line);gap:12px}
 .minor .ric{width:38px;height:38px}
@@ -136,6 +147,14 @@ svg{display:block}
 .banner p{flex:1;font-size:14px;line-height:1.4}
 .banner p b{font-weight:700}
 .banner.warn{border-color:var(--warn)}
+
+/* ---------- diary / notes ---------- */
+.diary-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:12px;box-shadow:0 2px 8px rgba(0,0,0,0.03)}
+.diary-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line2)}
+.diary-head b{font:400 20px var(--serif);color:var(--ink)}
+.diary-tb{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.diary-area{width:100%;min-height:240px;border:1px solid var(--line);border-radius:14px;background:var(--paper);padding:14px;font:400 16px/1.65 var(--sans);color:var(--ink);outline:none;resize:none}
+.diary-area:focus{border-color:var(--stone);box-shadow:0 0 0 3px var(--t-stone)}
 
 /* ---------- questions ---------- */
 .q{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:20px 0;border-bottom:1px solid var(--line2)}
@@ -535,11 +554,11 @@ const mark=(p,v)=>{
 /* ============ storage (local first) ============ */
 const KEY='sadhanapada.v1';
 let storageOK=true, db=null, saveT=null;
-const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},meta:{lastExport:null,dirty:false,seen:{}}});
+const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},notes:{},meta:{lastExport:null,dirty:false,seen:{}}});
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
-    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{}},o.meta||{});return o}
+    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.notes=o.notes||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{}},o.meta||{});return o}
   }catch(e){storageOK=false}
   return blank();
 }
@@ -572,6 +591,12 @@ function setNote(k,text){
   const d=dayOf(k,true);
   d.n=text.trim()?{t:text,at:nowISO()}:null;
   d.u=nowISO();cleanup(k);touch();
+}
+function setPersonalNote(k,text){
+  db.notes=db.notes||{};
+  if(!text.trim())delete db.notes[k];
+  else{const prev=db.notes[k];if(!prev||prev.t!==text)db.notes[k]={t:text,at:nowISO()};}
+  touch();
 }
 const P=id=>db.params.find(p=>p.id===id);
 const liveParams=()=>db.params.filter(p=>!p.archived);
@@ -1092,6 +1117,88 @@ function importText(text){
   return {nd,nw,np};
 }
 
+function buildNotesTXT(){
+  const notesObj=db.notes||{};
+  const keys=Object.keys(notesObj).filter(k=>notesObj[k]&&notesObj[k].t&&notesObj[k].t.trim()).sort();
+  const RULE='═'.repeat(46);
+  const head=[RULE,'SADHANAPADA PERSONAL NOTES & DIARY',RULE,
+    'One continuous date-wise record of your personal notes.',
+    'Each entry is saved date-wise in chronological order.',
+    '',
+    'Started:       '+fmtFull(dkey(new Date(db.created))),
+    'Last updated:  '+fmtDT(nowISO()),
+    'Total entries: '+keys.length];
+  const blocks=keys.map(k=>{
+    const n=notesObj[k],D=pk(k);
+    const dateHeader=DAY[D.getDay()].toUpperCase()+', '+D.getDate()+' '+MON[D.getMonth()].toUpperCase()+' '+D.getFullYear();
+    return RULE+'\n'+dateHeader+'  (saved '+fmtT(n.at)+')\n'+RULE+'\n'+n.t;
+  });
+  const payload={v:1,created:db.created,notes:notesObj};
+  const foot=[RULE,'END OF NOTES',RULE,'',
+    'RESTORE NOTES DATA. Do not edit the line below. The app reads it to bring back your notes.',
+    'SADHANAPADA-NOTES-DATA v1 '+JSON.stringify(payload)];
+  return head.join('\n')+'\n\n'+blocks.join('\n\n')+(blocks.length?'\n\n':'')+foot.join('\n')+'\n';
+}
+
+function importNotesText(text){
+  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-NOTES-DATA')===0);
+  if(!line)throw new Error('No notes restore data found in this text.');
+  const o=JSON.parse(line.slice(line.indexOf('{')));
+  if(!o||typeof o!=='object'||typeof o.notes!=='object')throw new Error('The notes restore data looks damaged.');
+  let nn=0;
+  db.notes=db.notes||{};
+  Object.keys(o.notes).forEach(k=>{
+    const inc=o.notes[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
+    const cur=db.notes[k];
+    if(!cur||(inc.at||'')>(cur.at||'')){db.notes[k]=inc;nn++}
+  });
+  touch();flush();
+  return {nn};
+}
+
+async function deliverNotes(txt){
+  const name='Sadhanapada-Notes.txt';
+  if(DL){
+    try{await DL.save({filename:name,data:txt});return true}
+    catch(e){
+      if(e&&e.code==='declined')return false;
+      if(e&&e.code==='rate_limited'){toast('Please wait a moment, then try again');return false}
+    }
+  }
+  try{
+    const f=new File([txt],name,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Sadhanapada Personal Notes'});return true}
+  }catch(e){if(e&&e.name==='AbortError')return false}
+  try{
+    const u=URL.createObjectURL(new Blob([txt],{type:'text/plain'})),a=document.createElement('a');
+    a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return true;
+  }catch(e){}
+  toast('Saving a file is not available here. Use Copy instead.');return false;
+}
+
+function insertBullet(ta){
+  if(!ta)return;
+  const start=ta.selectionStart,end=ta.selectionEnd,val=ta.value;
+  if(start===end){
+    const lineStart=val.lastIndexOf('\n',start-1)+1;
+    if(val.substring(lineStart,lineStart+2)==='• '){
+      ta.value=val.substring(0,lineStart)+val.substring(lineStart+2);
+      ta.selectionStart=ta.selectionEnd=Math.max(lineStart,start-2);
+    }else{
+      ta.value=val.substring(0,lineStart)+'• '+val.substring(lineStart);
+      ta.selectionStart=ta.selectionEnd=start+2;
+    }
+  }else{
+    const lines=val.substring(start,end).split('\n');
+    const newLines=lines.map(l=>l.startsWith('• ')?l.substring(2):'• '+l).join('\n');
+    ta.value=val.substring(0,start)+newLines+val.substring(end);
+    ta.selectionStart=start;
+    ta.selectionEnd=start+newLines.length;
+  }
+  ta.focus();
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
 /* ============ ui state & shared pieces ============ */
 const ui={route:'home',date:today(),wk:wkStart(today()),tw:wkStart(today()),ptab:'daily',ttab:'day',mon:monStart(today()),hf:'all',hord:'old',stab:'kriya',draft:null,cell:null,tday:today()};
 const view=$('#view'),sheet=$('#sheet'),toastEl=$('#toast');
@@ -1115,153 +1222,223 @@ function closeSheet(){
 }
 
 /* ============ home ============ */
-const RAYS='M10.5,0 L15.5,0 M7.4,7.4 L11,11 M0,10.5 L0,15.5 M-7.4,7.4 L-11,11 M-10.5,0 L-15.5,0 M-7.4,-7.4 L-11,-11 M0,-10.5 L0,-15.5 M7.4,-7.4 L11,-11';
-const CRESCENT='M9,.79A9,9 0 1 1 -.79,-9A7,7 0 0 0 9,.79Z';
-/* ============ home sky & time engine ============ */
-const parseHex=h=>{
-  let c=(h||'').replace('#','').trim();
-  if(c.length===3)c=c.split('').map(x=>x+x).join('');
-  const num=parseInt(c,16)||0;
-  return [(num>>16)&255, (num>>8)&255, num&255];
-};
-const hexLerp=(a,b,f)=>{
-  const [r1,g1,b1]=parseHex(a),[r2,g2,b2]=parseHex(b);
-  const r=Math.round(r1+(r2-r1)*f);
-  const g=Math.round(g1+(g2-g1)*f);
-  const bl=Math.round(b1+(b2-b1)*f);
-  return '#'+[r,g,bl].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');
-};
-
-function getSkyTimeProfile(){
-  const n=new Date();
-  const hr=n.getHours()+n.getMinutes()/60;
-
-  const keyframes=[
-    {hr:0,   isDay:false,t:0.50,bgTop:'#0B0F19',bgBot:'#161F33',hz:'#28354A',cardBg:'#101625',text:'#E2E8F0',sub:'#94A3B8'},
-    {hr:5.0, isDay:false,t:0.95,bgTop:'#121829',bgBot:'#222A42',hz:'#4B384C',cardBg:'#161C2C',text:'#E2E8F0',sub:'#94A3B8'},
-    {hr:6.2, isDay:true, t:0.05,bgTop:'#241D35',bgBot:'#8B425D',hz:'#E07A5F',cardBg:'#2E1E32',text:'#FFF1F2',sub:'#F1F5F9'},
-    {hr:7.8, isDay:true, t:0.18,bgTop:'#E1E7DC',bgBot:'#EFF3EA',hz:'#D2DAD0',cardBg:'#EBEEE9',text:'#212A2C',sub:'#4F5B5C'},
-    {hr:12.0,isDay:true, t:0.50,bgTop:'#DCE3D6',bgBot:'#EDF2E8',hz:'#C8D1C5',cardBg:'#EBEEE9',text:'#212A2C',sub:'#4F5B5C'},
-    {hr:16.5,isDay:true, t:0.82,bgTop:'#E2E7DC',bgBot:'#EFEFE3',hz:'#DEC9A8',cardBg:'#EBEEE9',text:'#212A2C',sub:'#4F5B5C'},
-    {hr:18.2,isDay:true, t:0.95,bgTop:'#281A38',bgBot:'#8B3859',hz:'#E06D53',cardBg:'#2D1B32',text:'#FFF1F2',sub:'#F1F5F9'},
-    {hr:20.2,isDay:false,t:0.12,bgTop:'#141829',bgBot:'#262D45',hz:'#543D52',cardBg:'#181C2E',text:'#E2E8F0',sub:'#94A3B8'},
-    {hr:24.0,isDay:false,t:0.50,bgTop:'#0B0F19',bgBot:'#161F33',hz:'#28354A',cardBg:'#101625',text:'#E2E8F0',sub:'#94A3B8'}
-  ];
-
-  let idx=0;
-  for(let i=0;i<keyframes.length-1;i++){
-    if(hr>=keyframes[i].hr&&hr<=keyframes[i+1].hr){idx=i;break}
-  }
-
-  const k1=keyframes[idx],k2=keyframes[idx+1];
-  const factor=(hr-k1.hr)/(k2.hr-k1.hr||1);
-
-  const bgTop=hexLerp(k1.bgTop,k2.bgTop,factor);
-  const bgBot=hexLerp(k1.bgBot,k2.bgBot,factor);
-  const hz=hexLerp(k1.hz,k2.hz,factor);
-  const cardBg=hexLerp(k1.cardBg,k2.cardBg,factor);
-  const text=hexLerp(k1.text,k2.text,factor);
-  const sub=hexLerp(k1.sub,k2.sub,factor);
-
-  const isDay=factor<.5?k1.isDay:k2.isDay;
-  const progress=(1-factor)*k1.t+factor*k2.t;
-
-  return {hr,isDay,progress,bgTop,bgBot,hz,cardBg,text,sub};
+function checkIsDarkTheme(){
+  const dt = document.documentElement.getAttribute('data-theme');
+  if (dt === 'dark') return true;
+  if (dt === 'light') return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-function skySVG(prof){
-  const x=(35+prof.progress*290).toFixed(1);
-  const y=(80-64*Math.sin(Math.PI*prof.progress)).toFixed(1);
+function skySVG(){
+  const n = new Date();
+  const hr = n.getHours() + n.getMinutes() / 60;
+  const day = hr >= 5.5 && hr < 18.5; // Sunrise ~ 5:30, Sunset ~ 18:30
+  const isDark = checkIsDarkTheme();
 
-  let body='';
-  if(prof.isDay){
-    body='<g class="body sun">'+
-      '<circle cx="'+x+'" cy="'+y+'" r="42" fill="url(#sunCoronaGrad)"/>'+
-      '<circle cx="'+x+'" cy="'+y+'" r="24" fill="url(#sunCoronaGrad)" filter="url(#softGlow)"/>'+
-      '<g transform="translate('+x+','+y+')" stroke="#FFE082" stroke-width="1.2" stroke-linecap="round" opacity="0.55">'+
-        '<line x1="0" y1="-20" x2="0" y2="-26"/>'+
-        '<line x1="14" y1="-14" x2="18" y2="-18"/>'+
-        '<line x1="20" y1="0" x2="26" y2="0"/>'+
-        '<line x1="14" y1="14" x2="18" y2="18"/>'+
-        '<line x1="0" y1="20" x2="0" y2="26"/>'+
-        '<line x1="-14" y1="14" x2="-18" y2="18"/>'+
-        '<line x1="-20" y1="0" x2="-26" y2="0"/>'+
-        '<line x1="-14" y1="-14" x2="-18" y2="-18"/>'+
-      '</g>'+
-      '<circle cx="'+x+'" cy="'+y+'" r="15" fill="url(#sunDiscGrad)"/>'+
-      '<circle cx="'+x+'" cy="'+y+'" r="13.5" fill="#FFFFFF" opacity="0.3"/>'+
-    '</g>';
+  // Progress t in [0, 1] along the sky arc
+  const t = day ? (hr - 5.5) / 13 : (hr >= 18.5 ? (hr - 18.5) / 11 : (hr + 5.5) / 11);
+  const clampT = Math.max(0, Math.min(1, t));
+
+  // Bezier curve coordinates across ViewBox 0 0 320 100
+  const x0 = 30, y0 = 76;
+  const x1 = 160, y1 = -10;
+  const x2 = 290, y2 = 76;
+  const cx = (1 - clampT) * (1 - clampT) * x0 + 2 * (1 - clampT) * clampT * x1 + clampT * clampT * x2;
+  const cy = (1 - clampT) * (1 - clampT) * y0 + 2 * (1 - clampT) * clampT * y1 + clampT * clampT * y2;
+
+  let bgStop0, bgStop1, bgOpacity0;
+  let coreStop0, coreStop1, innerGlowCol, outerGlowCol, outerGlowOpacity;
+  let bodyContent = '';
+
+  if (day) {
+    const isDawn = clampT < 0.2;
+    const isSunset = clampT > 0.8;
+
+    if (!isDark) { // DAY + LIGHT THEME
+      if (isDawn) {
+        bgStop0 = '#FFAB91'; bgStop1 = '#FFE0B2'; bgOpacity0 = 0.55;
+        coreStop0 = '#FFF3E0'; coreStop1 = '#FF6F00';
+        innerGlowCol = '#FF7043'; outerGlowCol = '#FFB74D'; outerGlowOpacity = 0.5;
+      } else if (isSunset) {
+        bgStop0 = '#FF8A65'; bgStop1 = '#D1C4E9'; bgOpacity0 = 0.60;
+        coreStop0 = '#FFF8E1'; coreStop1 = '#E65100';
+        innerGlowCol = '#FF5722'; outerGlowCol = '#FF9800'; outerGlowOpacity = 0.55;
+      } else { // Midday
+        bgStop0 = '#FFF8E1'; bgStop1 = '#FFE082'; bgOpacity0 = 0.45;
+        coreStop0 = '#FFFFFF'; coreStop1 = '#FFA000';
+        innerGlowCol = '#FFC107'; outerGlowCol = '#FFE082'; outerGlowOpacity = 0.45;
+      }
+    } else { // DAY + DARK THEME
+      if (isDawn || isSunset) {
+        bgStop0 = '#3E2723'; bgStop1 = '#261C18'; bgOpacity0 = 0.5;
+        coreStop0 = '#FFE082'; coreStop1 = '#D84315';
+        innerGlowCol = '#FF7043'; outerGlowCol = '#FF9800'; outerGlowOpacity = 0.35;
+      } else { // Midday on Dark Theme
+        bgStop0 = '#263238'; bgStop1 = '#1C272C'; bgOpacity0 = 0.45;
+        coreStop0 = '#FFF9C4'; coreStop1 = '#FFB300';
+        innerGlowCol = '#FFC107'; outerGlowCol = '#FFA000'; outerGlowOpacity = 0.3;
+      }
+    }
+
+    bodyContent = `
+      <g class="sun-group" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})">
+        <!-- Outer volumetric corona -->
+        <circle class="glow-outer" cx="0" cy="0" r="42" fill="url(#sunOuterGlow)"/>
+        <!-- Inner blurred corona -->
+        <circle class="glow-inner" cx="0" cy="0" r="22" fill="url(#sunInnerGlow)" filter="url(#glowBlur)"/>
+        <!-- Sun Core Disc -->
+        <circle cx="0" cy="0" r="10" fill="url(#sunCore)"/>
+      </g>
+    `;
+  } else { // NIGHTTIME
+    if (isDark) { // NIGHT + DARK THEME
+      bgStop0 = '#101B2B'; bgStop1 = '#131A1B'; bgOpacity0 = 0.65;
+      coreStop0 = '#ECEFF1'; coreStop1 = '#CFD8DC';
+      innerGlowCol = '#B0BEC5'; outerGlowCol = '#90A4AE'; outerGlowOpacity = 0.35;
+    } else { // NIGHT + LIGHT THEME
+      bgStop0 = '#C5CAE9'; bgStop1 = '#E8EAF6'; bgOpacity0 = 0.45;
+      coreStop0 = '#546E7A'; coreStop1 = '#37474F';
+      innerGlowCol = '#78909C'; outerGlowCol = '#90A4AE'; outerGlowOpacity = 0.25;
+    }
+
+    // 10 Twinkling Stars scattered across upper sky
+    const starColor = isDark ? 'rgba(236, 239, 241, 0.85)' : 'rgba(120, 144, 156, 0.55)';
+    const stars = [
+      {cx: 45, cy: 22, r: 1.1}, {cx: 85, cy: 38, r: 0.8}, {cx: 125, cy: 18, r: 1.3},
+      {cx: 175, cy: 32, r: 0.7}, {cx: 215, cy: 15, r: 1.2}, {cx: 255, cy: 42, r: 0.9},
+      {cx: 285, cy: 25, r: 1.0}, {cx: 65, cy: 55, r: 0.7}, {cx: 145, cy: 50, r: 0.9}, {cx: 235, cy: 58, r: 0.8}
+    ];
+
+    const starsHTML = stars.map((s, idx) =>
+      `<circle class="star" cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${starColor}" style="animation-delay:${(idx * 0.4).toFixed(1)}s"/>`
+    ).join('');
+
+    // Crescent Curve Path centered at (0,0)
+    const crescentD = "M 7,-9 A 9,9 0 1,1 -5,7 A 7.5,7.5 0 0,0 7,-9 Z";
+
+    bodyContent = `
+      <g class="sky-stars">${starsHTML}</g>
+      <g class="moon-group" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(1.05)">
+        <!-- Outer lunar halo -->
+        <circle class="glow-outer" cx="0" cy="0" r="34" fill="url(#moonOuterGlow)"/>
+        <!-- Inner lunar aura -->
+        <circle class="glow-inner" cx="0" cy="0" r="18" fill="url(#moonInnerGlow)" filter="url(#glowBlur)"/>
+        <!-- Moon Crescent Disc -->
+        <path class="moon-disc" d="${crescentD}" fill="url(#moonBody)"/>
+      </g>
+    `;
+  }
+
+  return `
+    <svg class="sky" viewBox="0 0 320 100" aria-hidden="true">
+      <defs>
+        <filter id="glowBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.5" />
+        </filter>
+        <radialGradient id="skyBgGrad" cx="50%" cy="0%" r="90%">
+          <stop offset="0%" stop-color="${bgStop0}" stop-opacity="${bgOpacity0}"/>
+          <stop offset="55%" stop-color="${bgStop1}" stop-opacity="${(bgOpacity0 * 0.35).toFixed(2)}"/>
+          <stop offset="100%" stop-color="${bgStop1}" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="sunCore" cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="${coreStop0}"/>
+          <stop offset="100%" stop-color="${coreStop1}"/>
+        </radialGradient>
+        <radialGradient id="sunInnerGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="${innerGlowCol}" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="${innerGlowCol}" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="sunOuterGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="${outerGlowCol}" stop-opacity="${outerGlowOpacity}"/>
+          <stop offset="100%" stop-color="${outerGlowCol}" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="moonBody" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="${coreStop0}"/>
+          <stop offset="100%" stop-color="${coreStop1}"/>
+        </radialGradient>
+        <radialGradient id="moonInnerGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="${innerGlowCol}" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="${innerGlowCol}" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="moonOuterGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="${outerGlowCol}" stop-opacity="${outerGlowOpacity}"/>
+          <stop offset="100%" stop-color="${outerGlowCol}" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Ambient Sky Backdrop fading into page background -->
+      <rect x="0" y="0" width="320" height="100" fill="url(#skyBgGrad)"/>
+
+      <!-- Celestial Body (Sun/Moon & Stars) -->
+      ${bodyContent}
+    </svg>
+  `;
+}
+function insertTodo(ta){
+  if(!ta)return;
+  const start=ta.selectionStart,val=ta.value;
+  const lineStart=val.lastIndexOf('\n',start-1)+1;
+  if(val.substring(lineStart,lineStart+2)==='☐ '){
+    ta.value=val.substring(0,lineStart)+val.substring(lineStart+2);
+    ta.selectionStart=ta.selectionEnd=Math.max(lineStart,start-2);
   }else{
-    body='<g class="stars" fill="#E2E8F0">'+
-      '<circle cx="45" cy="22" r="1.2" class="star" style="animation-delay:0s"/>'+
-      '<circle cx="85" cy="40" r="0.9" class="star" style="animation-delay:0.8s"/>'+
-      '<circle cx="120" cy="18" r="1.4" class="star" style="animation-delay:1.5s"/>'+
-      '<circle cx="155" cy="35" r="0.8" class="star" style="animation-delay:0.4s"/>'+
-      '<circle cx="205" cy="20" r="1.1" class="star" style="animation-delay:2.1s"/>'+
-      '<circle cx="240" cy="42" r="1.3" class="star" style="animation-delay:1.1s"/>'+
-      '<circle cx="280" cy="25" r="0.9" class="star" style="animation-delay:1.8s"/>'+
-      '<circle cx="315" cy="38" r="1.0" class="star" style="animation-delay:0.6s"/>'+
-    '</g>'+
-    '<g class="body moon">'+
-      '<circle cx="'+x+'" cy="'+y+'" r="32" fill="url(#moonGlowGrad)"/>'+
-      '<circle cx="'+x+'" cy="'+y+'" r="14" fill="url(#moonSphereGrad)"/>'+
-      '<g transform="translate('+x+','+y+')" opacity="0.32" fill="#475569">'+
-        '<ellipse cx="-4" cy="-3" rx="5" ry="4" transform="rotate(-15)"/>'+
-        '<ellipse cx="4" cy="-1" rx="4" ry="3.5" transform="rotate(10)"/>'+
-        '<circle cx="3" cy="-6" r="2.5"/>'+
-        '<ellipse cx="7" cy="-4" rx="2" ry="2.8" transform="rotate(20)"/>'+
-        '<ellipse cx="5" cy="4" rx="3.5" ry="3" transform="rotate(-10)"/>'+
-        '<circle cx="-2" cy="7" r="1.8" fill="#F8FAFC" opacity="0.6"/>'+
-      '</g>'+
-      '<path d="M '+x+' '+(y-14)+' A 14 14 0 0 1 '+x+' '+(y+14)+' A 11 14 0 0 0 '+x+' '+(y-14)+' Z" fill="#0F172A" opacity="0.75"/>'+
-    '</g>';
+    ta.value=val.substring(0,lineStart)+'☐ '+val.substring(lineStart);
+    ta.selectionStart=ta.selectionEnd=start+2;
   }
-
-  return '<svg class="sky" viewBox="0 0 360 110" aria-hidden="true">'+
-    '<defs>'+
-      '<linearGradient id="skyBgGrad" x1="0" y1="0" x2="0" y2="1">'+
-        '<stop offset="0%" stop-color="'+prof.bgTop+'"/>'+
-        '<stop offset="100%" stop-color="'+prof.bgBot+'"/>'+
-      '</linearGradient>'+
-      '<radialGradient id="sunCoronaGrad" cx="50%" cy="50%" r="50%">'+
-        '<stop offset="0%" stop-color="#FFE57F" stop-opacity="0.8"/>'+
-        '<stop offset="35%" stop-color="#FFB300" stop-opacity="0.4"/>'+
-        '<stop offset="70%" stop-color="#FF6F00" stop-opacity="0.12"/>'+
-        '<stop offset="100%" stop-color="#FF6F00" stop-opacity="0"/>'+
-      '</radialGradient>'+
-      '<radialGradient id="sunDiscGrad" cx="38%" cy="38%" r="62%">'+
-        '<stop offset="0%" stop-color="#FFFFFF"/>'+
-        '<stop offset="25%" stop-color="#FFF8E1"/>'+
-        '<stop offset="65%" stop-color="#FFC107"/>'+
-        '<stop offset="100%" stop-color="#F57C00"/>'+
-      '</radialGradient>'+
-      '<radialGradient id="moonGlowGrad" cx="50%" cy="50%" r="50%">'+
-        '<stop offset="0%" stop-color="#E2E8F0" stop-opacity="0.7"/>'+
-        '<stop offset="45%" stop-color="#94A3B8" stop-opacity="0.25"/>'+
-        '<stop offset="100%" stop-color="#64748B" stop-opacity="0"/>'+
-      '</radialGradient>'+
-      '<radialGradient id="moonSphereGrad" cx="32%" cy="32%" r="68%">'+
-        '<stop offset="0%" stop-color="#FFFFFF"/>'+
-        '<stop offset="40%" stop-color="#E2E8F0"/>'+
-        '<stop offset="75%" stop-color="#CBD5E1"/>'+
-        '<stop offset="100%" stop-color="#64748B"/>'+
-      '</radialGradient>'+
-      '<filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">'+
-        '<feGaussianBlur stdDeviation="3"/>'+
-      '</filter>'+
-    '</defs>'+
-    '<rect width="360" height="110" rx="16" fill="url(#skyBgGrad)"/>'+
-    '<path d="M 35 80 Q 180 12 325 80" fill="none" stroke="'+prof.hz+'" stroke-width="1" stroke-dasharray="3 6" opacity="0.4"/>'+
-    '<line x1="0" y1="82" x2="360" y2="82" stroke="'+prof.hz+'" stroke-width="1.2" opacity="0.6"/>'+
-    '<rect x="0" y="82" width="360" height="28" fill="'+prof.hz+'" opacity="0.15"/>'+
-    body+
-  '</svg>';
+  ta.focus();
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
+function insertTime(ta){
+  if(!ta)return;
+  const start=ta.selectionStart,end=ta.selectionEnd,val=ta.value;
+  const now=new Date();
+  const timeStr='['+fmtHM(pad(now.getHours())+':'+pad(now.getMinutes()))+'] ';
+  ta.value=val.substring(0,start)+timeStr+val.substring(end);
+  ta.selectionStart=ta.selectionEnd=start+timeStr.length;
+  ta.focus();
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
+function insertRule(ta){
+  if(!ta)return;
+  const start=ta.selectionStart,end=ta.selectionEnd,val=ta.value;
+  const ruleStr='\n───────────────\n';
+  ta.value=val.substring(0,start)+ruleStr+val.substring(end);
+  ta.selectionStart=ta.selectionEnd=start+ruleStr.length;
+  ta.focus();
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
+function noteStats(text){
+  if(!text||!text.trim())return '0 words • 0 chars';
+  const chars=text.length;
+  const words=text.trim().split(/\s+/).length;
+  return words+' '+(words===1?'word':'words')+' • '+chars+' chars';
+}
+
+function privacyNoticeBanner(){
+  if(db&&db.meta&&db.meta.seenPrivacyNotice)return '';
+  return '<div class="card" style="background:var(--t-lichen);border-color:var(--hi);margin-bottom:14px;padding:16px">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
+      '<span class="ic" style="color:var(--hi)">'+IC.check+'</span>'+
+      '<b style="font:400 18px var(--serif);color:var(--ink)">100% Private Local Storage</b>'+
+    '</div>'+
+    '<p style="font-size:14px;line-height:1.5;color:var(--ink2)">'+
+      'Your data is saved locally on your device storage. You don’t have to worry about data leaks — everything stays completely on your device.'+
+    '</p>'+
+    '<div style="margin-top:12px;text-align:right">'+
+      '<button class="btn sm pri" data-act="dismissPrivacyNotice">Got it, thanks</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ============ home ============ */
 function vHome(){
   const now=new Date(),hr=now.getHours(),mins=hr*60+now.getMinutes(),t=today();
   const greet=hr<5?'Good night':hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
-  const prof=getSkyTimeProfile();
   const nAns=DQ.filter(q=>answeredD(t,q)).length;
   const ps=liveParams(),dd=(db.days[t]||{}).t||{},done=ps.filter(p=>dd[p.id]!==undefined).length;
   const bn=[];
@@ -1280,16 +1457,60 @@ function vHome(){
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
     row('c-guided','guided',IC.audio,'Guided Yogasanas','Starts from Padahastasana (do Nadi Vibhajan first)'),
-    row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles'),
-    row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
-    row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti')
+    row('c-practices','practices',IC.mountain,'Practices guidance','Yogasanas, Shakti Chalana & Surya Kriya'),
+    row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes')
   ].join('');
   const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
-  return '<div class="home-top" style="background:'+prof.cardBg+';color:'+prof.text+';transition:background 1s ease,color 1s ease">'+
-    skySVG(prof)+
-    '<div class="greet" style="color:'+prof.sub+';transition:color 1s ease">'+greet+'</div>'+
-    '<h1 style="color:'+prof.text+';transition:color 1s ease">'+esc(fmtLong(t))+'</h1>'+
-  '</div><div class="pg">'+bn.slice(0,2).join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
+  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.slice(0,2).join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
+}
+
+function vPractices(){
+  const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
+  const cards=[
+    row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles and preparations'),
+    row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
+    row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti instructions')
+  ].join('');
+  return hdr('Practices guidance',{back:'home'})+
+    '<main class="pg">'+
+      '<p class="muted small" style="margin:10px 0 16px;line-height:1.5">Select a practice below to view step-by-step instructions, posture sequences, and guidelines:</p>'+
+      '<div class="rows">'+cards+'</div>'+
+    '</main>';
+}
+
+function vNotes(){
+  const k=ui.date,isT=k===today(),D=pk(k);
+  const noteData=(db.notes||{})[k]||{t:'',at:null};
+  const dateStr=DAY[D.getDay()]+', '+D.getDate()+' '+MON[D.getMonth()]+' '+D.getFullYear();
+  const stats=noteStats(noteData.t||'');
+
+  return hdr('Personal Notes',{back:'home'})+
+    '<main class="pg">'+
+      dnav(isT?'Today':fmtLong(k),isT?fmtLong(k):'','ndate',k<today())+
+      (!isT?'<div style="text-align:center;margin:-2px 0 8px"><button class="chip sm" data-act="goNoteToday">Jump to Today</button></div>':'')+
+      '<div class="diary-card">'+
+        '<div class="diary-head">'+
+          '<div><b>'+esc(dateStr)+'</b><small style="display:block;color:var(--ink3);font-size:12px;margin-top:2px" id="note-stats">'+esc(stats)+'</small></div>'+
+          '<span style="font-size:12px;color:var(--ink3);font-weight:600" id="sv-diary">'+(noteData.at?'Saved '+esc(fmtT(noteData.at)):'')+'</span>'+
+        '</div>'+
+        '<div class="diary-tb">'+
+          '<button class="btn sm" data-act="bulletNote" title="Add bullet list item">'+IC.plus+' Bullet</button>'+
+          '<button class="btn sm" data-act="todoNote" title="Add checklist item">'+IC.check+' Todo</button>'+
+          '<button class="btn sm" data-act="timeNote" title="Insert timestamp">🕒 Time</button>'+
+          '<button class="btn sm" data-act="ruleNote" title="Insert line divider">─ Line</button>'+
+          '<button class="btn sm" data-act="clearNote">Clear</button>'+
+        '</div>'+
+        '<textarea id="diary-text" class="diary-area" data-date="'+k+'" rows="11" placeholder="Write your thoughts, daily journal, reflection or checklist here...">'+esc(noteData.t||'')+'</textarea>'+
+        '<div class="btns" style="margin-top:12px;justify-content:space-between">'+
+          '<button class="btn sm" data-act="copyNotesTxt">'+IC.copy+' Copy All Notes</button>'+
+          '<button class="btn sm pri" data-act="saveNotesTxt">'+IC.save+' Save Notes File (.txt)</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="privacy-badge" style="margin-top:16px">'+
+        '<span class="ic" style="color:var(--hi)">'+IC.check+'</span>'+
+        '<span><b>100% Private:</b> Saved locally in your device storage. You don’t have to worry about data leaks.</span>'+
+      '</div>'+
+    '</main>';
 }
 
 /* ============ parameters ============ */
@@ -1298,7 +1519,7 @@ function field(scope,key,q,a,top){
   return '<div class="fld"><div class="qlbl"><label class="'+(top?'qt':'qs2')+'" for="'+id+'">'+(top?'':'<i>'+q.n+')</i> ')+esc(q.q)+'</label>'+
     (q.h?'<button type="button" class="qhint" data-act="togHint" data-id="'+id+'" aria-label="Show hint">?</button>':'')+'</div>'+
     (q.h?'<p class="qh" id="h-'+id+'" hidden>'+esc(q.h)+'</p>':'')+
-    '<textarea id="'+id+'" data-q="'+scope+':'+q.id+'" rows="2" placeholder="Write freely">'+esc(v?v.t:'')+'</textarea><div class="sv" id="sv-'+q.id+'">'+(v?'Saved '+esc(fmtT(v.at)):'')+'</div></div>';
+    '<textarea id="'+id+'" data-q="'+scope+':'+q.id+'" rows="2" placeholder="">'+esc(v?v.t:'')+'</textarea><div class="sv" id="sv-'+q.id+'">'+(v?'Saved '+esc(fmtT(v.at)):'')+'</div></div>';
 }
 function qCard(scope,key,q,rec){
   const a=(rec&&rec.a)||{};
@@ -1341,7 +1562,7 @@ function pHistory(){
 }
 function vParams(){
   const body=ui.ptab==='daily'?pDaily():ui.ptab==='weekly'?pWeekly():pHistory();
-  return hdr('Parameters')+'<main class="pg">'+tabs([['daily','Daily'],['weekly','Weekly'],['history','History']],ui.ptab,'ptab')+body+'</main>';
+  return hdr('Parameters')+'<main class="pg">'+privacyNoticeBanner()+tabs([['daily','Daily'],['weekly','Weekly'],['history','History']],ui.ptab,'ptab')+body+'</main>';
 }
 
 /* ============ tracker ============ */
@@ -1482,7 +1703,7 @@ function vPractice(key){
     secs=tab.secs;tb=tabs(data.tabs.map(t=>[t.id,t.t]),tab.id,'stab');
   }
   const chips='<div class="chips">'+secs.map(s=>'<button class="chip" data-act="jump" data-id="'+s.id+'">'+esc(s.t.replace(/^\d+\.\s*/,''))+'</button>').join('')+'</div>';
-  return hdr(data.title,{sub:chips})+'<main class="pg">'+tb+'<div class="search">'+IC.search+'<input type="text" id="psearch" placeholder="Search this page" autocomplete="off" aria-label="Search this page"></div>'+
+  return hdr(data.title,{back:'practices',sub:chips})+'<main class="pg">'+tb+'<div class="search">'+IC.search+'<input type="text" id="psearch" placeholder="Search this page" autocomplete="off" aria-label="Search this page"></div>'+
     secs.map(s=>'<section class="psec" id="sec-'+s.id+'" data-t="'+esc(s.t.toLowerCase())+'"><h2>'+esc(s.t)+'</h2>'+s.b.map(blk).join('')+'</section>').join('')+'<div class="nomatch" id="nomatch" hidden>Nothing matches that search.</div></main>';
 }
 function applySearch(q){
@@ -1604,19 +1825,51 @@ function vBackup(){
   const nDays=Object.keys(db.days).filter(hasData).length;
   let nR=0;Object.keys(db.days).forEach(k=>{nR+=Object.values(db.days[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
   Object.keys(db.weeks).forEach(k=>{nR+=Object.values(db.weeks[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
+  const nNotes=Object.keys(db.notes||{}).filter(k=>db.notes[k]&&db.notes[k].t&&db.notes[k].t.trim()).length;
   const last=db.meta.lastExport;
   const canShare=!!(navigator.canShare&&navigator.share&&(()=>{try{return navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})}catch(e){return false}})());
   return hdr('Backup')+'<main class="pg">'+
-    '<div class="card"><h3>Your journal</h3><div class="kv"><span>Days recorded</span><span>'+nDays+'</span></div><div class="kv"><span>Answers saved</span><span>'+nR+'</span></div><div class="kv"><span>Last saved to a file</span><span>'+(last?esc(fmtDT(last)):'Not yet')+'</span></div><div class="kv"><span>Changes since then</span><span>'+(db.meta.dirty?'Yes':'None')+'</span></div></div>'+
-    '<p class="muted small" style="margin:12px 2px">Everything lives in one text file. Each day is added below the previous one, with the newest at the bottom. The file always has the same name, so save over the older copy and keep it somewhere safe, like Google Drive or Files. That copy stays with you even if the app is removed.</p>'+
-    '<div class="btns"><button class="btn pri" data-act="saveTxt">'+IC.save+' Save journal file</button>'+(canShare?'<button class="btn" data-act="shareTxt">Share</button>':'')+'<button class="btn" data-go="journal">'+IC.eye+' Read it</button><button class="btn" data-act="copyTxt">'+IC.copy+' Copy</button></div>'+
-    '<div class="card"><h3>Restore</h3><p>Bring everything back from a saved journal file, for example after reinstalling. Entries already here are kept, and the newer version of any day wins.</p><div class="btns"><button class="btn sm" data-act="pickFile">'+IC.upload+' Choose file</button><button class="btn sm" data-act="pasteRestore">Paste text</button></div></div>'+
+    '<div class="privacy-badge" style="margin-bottom:14px">'+
+      '<span class="ic" style="color:var(--hi)">'+IC.check+'</span>'+
+      '<span><b>100% Private:</b> Your data is saved locally on your device storage. You don’t have to worry about data leaks — everything stays completely on your device.</span>'+
+    '</div>'+
+    '<div class="card"><h3>1. Journal File (Parameters & Tracker)</h3>'+
+      '<div class="kv"><span>Days recorded</span><span>'+nDays+'</span></div>'+
+      '<div class="kv"><span>Answers saved</span><span>'+nR+'</span></div>'+
+      '<div class="kv"><span>Last saved</span><span>'+(last?esc(fmtDT(last)):'Not yet')+'</span></div>'+
+      '<p class="muted small" style="margin-top:10px">Contains all your daily/weekly reflection parameters and tracker data in one continuous text file (<code>Sadhanapada-Journal.txt</code>).</p>'+
+      '<div class="btns" style="margin-top:12px">'+
+        '<button class="btn pri sm" data-act="saveTxt">'+IC.save+' Save Journal File</button>'+
+        (canShare?'<button class="btn sm" data-act="shareTxt">Share</button>':'')+
+        '<button class="btn sm" data-go="journal">'+IC.eye+' Read</button>'+
+        '<button class="btn sm" data-act="copyTxt">'+IC.copy+' Copy</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-top:14px"><h3>2. Personal Notes File (Diary)</h3>'+
+      '<div class="kv"><span>Diary entries</span><span>'+nNotes+'</span></div>'+
+      '<p class="muted small" style="margin-top:10px">Contains all your date-wise personal notes and diary entries in one single text file (<code>Sadhanapada-Notes.txt</code>).</p>'+
+      '<div class="btns" style="margin-top:12px">'+
+        '<button class="btn pri sm" data-act="saveNotesTxt">'+IC.save+' Save Notes File</button>'+
+        (canShare?'<button class="btn sm" data-act="shareNotesTxt">Share</button>':'')+
+        '<button class="btn sm" data-go="notes-file">'+IC.eye+' Read</button>'+
+        '<button class="btn sm" data-act="copyNotesTxt">'+IC.copy+' Copy</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-top:14px"><h3>Restore</h3>'+
+      '<p>Bring everything back from your saved files. Choose a file to restore Journal or Notes data.</p>'+
+      '<div class="btns"><button class="btn sm" data-act="pickFile">'+IC.upload+' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>'+
+    '</div>'+
     remindersCardHTML()+
-    '<div class="card"><h3>Where your data lives</h3><p>'+(storageOK?'Saved automatically on this device, in this browser only. Nothing is sent anywhere.':'This browser is blocking storage. Save your journal file often.')+'</p></div>'+
+    '<div class="card" style="margin-top:14px"><h3>Where your data lives</h3>'+
+      '<p>'+(storageOK?'Saved automatically on this device in your local browser storage. No data is sent to any server.':'This browser is blocking storage. Save your TXT files often.')+'</p>'+
+    '</div>'+
     '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
 }
 function vJournal(){
   return hdr('Journal',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
+}
+function vNotesFile(){
+  return hdr('Personal Notes File',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildNotesTXT().replace(/^SADHANAPADA-NOTES-DATA v1 .*$/m,'SADHANAPADA-NOTES-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
 }
 
 /* ============ guided audio player ============ */
@@ -1899,11 +2152,14 @@ function render(anim){
       case 'params':h=vParams();break;
       case 'tracker':h=parts[1]==='manage'?vManage():vTracker();break;
       case 'guided':h=vGuided();break;
+      case 'practices':h=vPractices();break;
+      case 'notes':h=vNotes();break;
       case 'yoga':case 'shakti':case 'surya':h=vPractice(a);break;
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
       case 'backup':h=vBackup();break;
       case 'journal':h=vJournal();break;
+      case 'notes-file':h=vNotesFile();break;
       default:h=vHome();
     }
   }catch(e){console.error(e);h='<main class="pg"><p style="padding-top:40px">Something went wrong while showing this page.</p><div class="btns"><button class="btn" data-go="home">Back to Home</button></div></main>'}
@@ -1959,11 +2215,28 @@ async function copyText(t){
   try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(e){return false}
 }
 function doImport(text){
-  try{const r=importText(text);closeSheet();render();toast('Restored '+plural(r.nd,'day')+(r.nw?' and '+plural(r.nw,'weekly entry','weekly entries'):''))}
-  catch(e){toast(e.message||'Could not restore from that')}
+  try{
+    if(text.indexOf('SADHANAPADA-NOTES-DATA')>=0){
+      const r=importNotesText(text);
+      closeSheet();render();toast('Restored '+plural(r.nn,'note entry','note entries'));
+    }else if(text.indexOf('SADHANAPADA-DATA')>=0){
+      const r=importText(text);
+      closeSheet();render();toast('Restored '+plural(r.nd,'day')+(r.nw?' and '+plural(r.nw,'weekly entry','weekly entries'):''));
+    }else{
+      toast('Unrecognized file format. Make sure it is a Sadhanapada journal or notes file.');
+    }
+  }catch(e){
+    toast(e.message||'Could not restore from that file');
+  }
 }
 
 const ACT={
+  dismissPrivacyNotice(){
+    db.meta=db.meta||{};
+    db.meta.seenPrivacyNotice=true;
+    touch();
+    render();
+  },
   togHint(a){
     const el=document.getElementById('h-'+a.dataset.id);
     if(el){
@@ -1981,6 +2254,16 @@ const ACT={
   },
   ptab(a){ui.ptab=a.dataset.v;render()},
   pdate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
+  ndate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
+  goNoteToday(){ui.date=today();render()},
+  bulletNote(){const ta=document.getElementById('diary-text');if(ta)insertBullet(ta)},
+  todoNote(){const ta=document.getElementById('diary-text');if(ta)insertTodo(ta)},
+  timeNote(){const ta=document.getElementById('diary-text');if(ta)insertTime(ta)},
+  ruleNote(){const ta=document.getElementById('diary-text');if(ta)insertRule(ta)},
+  clearNote(){const ta=document.getElementById('diary-text');if(ta){ta.value='';setPersonalNote(ta.dataset.date||ui.date,'');const sv=document.getElementById('sv-diary');if(sv)sv.textContent='';const st=document.getElementById('note-stats');if(st)st.textContent=noteStats('')}},
+  async saveNotesTxt(){if(await deliverNotes(buildNotesTXT())){toast('Personal Notes saved as TXT file')}},
+  async copyNotesTxt(){toast(await copyText(buildNotesTXT())?'Notes copied':'Could not copy')},
+  async shareNotesTxt(){try{const f=new File([buildNotesTXT()],'Sadhanapada-Notes.txt',{type:'text/plain'});await navigator.share({files:[f],title:'Sadhanapada Personal Notes'})}catch(e){if(!e||e.name!=='AbortError')toast('Sharing is not available here')}},
   pwk(a){const n=addD(ui.wk,7*a.dataset.d);if(n>wkStart(today()))return;ui.wk=n;render()},
   hf(a){ui.hf=a.dataset.v;render()},
   hord(){ui.hord=ui.hord==='old'?'new':'old';render()},
@@ -2055,7 +2338,7 @@ const ACT={
   },
   async copyTxt(){toast(await copyText(buildTXT())?'Journal copied':'Could not copy')},
   pickFile(){$('#filein').click()},
-  pasteRestore(){openSheet('<h2>Restore from text</h2><p class="sub">Paste the full contents of your journal file.</p><textarea id="paste-in" rows="6" placeholder="Paste here"></textarea><div class="btns" style="justify-content:space-between;margin-top:18px"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn pri" data-act="doPaste">Restore</button></div>')},
+  pasteRestore(){openSheet('<h2>Restore from text</h2><p class="sub">Paste the full contents of your journal or notes file.</p><textarea id="paste-in" rows="6" placeholder="Paste here"></textarea><div class="btns" style="justify-content:space-between;margin-top:18px"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn pri" data-act="doPaste">Restore</button></div>')},
   doPaste(){const t=$('#paste-in');doImport(t?t.value:'')},
   wipe(){openSheet('<h2>Erase everything?</h2><p class="sub" style="margin-top:8px;font-size:14.5px">This removes every entry, tracker and review from this device. Save your journal file first if you want to keep a copy. This cannot be undone.</p><div class="btns" style="justify-content:space-between;margin-top:20px"><button class="btn" data-act="closeSheet">Keep my data</button><button class="btn warn" data-act="wipeYes">Erase</button></div>')},
   wipeYes(){db=blank();flush();closeSheet();ui.date=today();go('home');toast('Everything was erased')},
@@ -2095,6 +2378,12 @@ document.addEventListener('input',e=>{
   if(t.matches('textarea'))autosize(t);
   if(t.id==='guided-seek'){
     seekGuidedTo(Number(t.value));
+  }else if(t.id==='diary-text'){
+    const k=t.dataset.date||ui.date;
+    setPersonalNote(k,t.value);
+    const sv=document.getElementById('sv-diary');
+    const n=(db.notes||{})[k];
+    if(sv)sv.textContent=n&&n.at?'Saved '+fmtT(n.at):'';
   }else if(t.dataset&&t.dataset.q){
     const p=t.dataset.q.split(':'),sc=p[0],id=p[1],key=sc==='d'?ui.date:ui.wk;
     setAns(sc,key,id,t.value);
@@ -2152,8 +2441,15 @@ function init(){
   setTimeout(()=>{if(hero.parentNode)hero.parentNode.removeChild(hero)},2500);
   try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(e){}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  if(window.MutationObserver){
+    const themeObs=new MutationObserver(()=>{if(ui.route==='home')render()});
+    themeObs.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  }
+  if(window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(ui.route==='home')render()});
+  }
 }
-window.__sd={ACT,go,render,ui,init,get db(){return db},set db(v){db=v},buildTXT,importText,computeReview,ctxFor,reviewStarts,vHome,unseenReview,addParam,setT,setAns,setNote,persist};
+window.__sd={ACT,go,render,ui,init,get db(){return db},set db(v){db=v},buildTXT,buildNotesTXT,importText,importNotesText,computeReview,ctxFor,reviewStarts,vHome,unseenReview,addParam,setT,setAns,setNote,setPersonalNote,persist};
 /* offline + installable */
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
   window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
