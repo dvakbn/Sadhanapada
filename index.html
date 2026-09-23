@@ -206,6 +206,11 @@ svg{display:block}
 .c-angamardhana{--a:var(--bark);--t:var(--t-bark)}
 .c-shakti{--a:var(--dusk);--t:var(--t-dusk)}
 .c-surya{--a:var(--amber);--t:var(--t-amber)}
+.card-logo{width:34px;height:34px;object-fit:contain;display:block;filter:contrast(1.6) drop-shadow(0 0 0.5px rgba(0,0,0,0.6))}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .card-logo{filter:invert(1) brightness(1.3) contrast(1.6) drop-shadow(0 0 0.5px rgba(255,255,255,0.6))}
+}
+:root[data-theme="dark"] .card-logo{filter:invert(1) brightness(1.3) contrast(1.6) drop-shadow(0 0 0.5px rgba(255,255,255,0.6))}
 .privacy-badge{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--t-lichen);color:var(--ink2);font-size:13.5px;line-height:1.4;margin:12px 0}
 .minor{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .minor .row{padding:12px 14px;border-radius:18px;background:transparent;border:1px solid var(--line);gap:12px}
@@ -1596,7 +1601,7 @@ function vHome(){
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
     row('c-guided','guided',IC.audio,'Guided Yogasanas','Starts from Padahastasana (do Nadi Vibhajan first)'),
-    row('c-practices','practices',IC.mountain,'Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
+    row('c-practices','practices','<img src="PRACTICES GUIDANCE.png" class="card-logo" alt="Practices guidance">','Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
     row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes')
   ].join('');
   const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
@@ -1606,10 +1611,10 @@ function vHome(){
 function vPractices(){
   const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
   const cards=[
-    row('c-yoga','yoga',IC.mountain,'Yogasana','31 postures with cycles and preparations'),
-    row('c-angamardhana','angamardhana',IC.leaf,'Angamardhana','31 processes in standing, squatting, sitting & lying down'),
-    row('c-shakti','shakti',IC.wave,'Shakti Chalana','8 kriyas and Shoonya Meditation'),
-    row('c-surya','surya',IC.sun,'Surya Kriya','Surya Kriya and Surya Shakti instructions')
+    row('c-yoga','yoga','<img src="YOGASANA.png" class="card-logo" alt="Yogasana">','Yogasana','31 postures with cycles and preparations'),
+    row('c-angamardhana','angamardhana','<img src="ANGAMARDHANA.png" class="card-logo" alt="Angamardhana">','Angamardhana','31 processes in standing, squatting, sitting & lying down'),
+    row('c-shakti','shakti','<img src="SHAKTI CHALANA.png" class="card-logo" alt="Shakti Chalana">','Shakti Chalana','8 kriyas and Shoonya Meditation'),
+    row('c-surya','surya','<img src="SURYA KRIYA.png" class="card-logo" alt="Surya Kriya">','Surya Kriya','Surya Kriya and Surya Shakti instructions')
   ].join('');
   return hdr('Practices guidance',{back:'home'})+
     '<main class="pg">'+
