@@ -15,10 +15,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EBEEE9; --paper:#F6F7F3; --ink:#212A2C; --ink2:#4F5B5C; --ink3:#77838A; --line:#D0D7D0; --line2:#DFE4DD; --fill:#E1E6DF;
-  --bark:#98826E; --lichen:#7B9382; --stone:#6B8593; --dusk:#8C7C9B; --amber:#C4913F;
-  --t-bark:rgba(152,130,110,.13); --t-lichen:rgba(123,147,130,.15); --t-stone:rgba(107,133,147,.14); --t-dusk:rgba(140,124,155,.14); --t-amber:rgba(196,145,63,.15);
-  --hi:#5E8A6C; --mid:#A98B3B; --lo:#8A7A9E; --warn:#A5605A;
+  --bg:#E4E8E1; --paper:#EFF2EC; --ink:#1D2628; --ink2:#4A5657; --ink3:#727E82; --line:#C2C8BE; --line2:#D4DAD1; --fill:#D8DFD5;
+  --bark:#8A725D; --lichen:#698571; --stone:#5B7785; --dusk:#7C6C8C; --amber:#B88132;
+  --t-bark:rgba(138,114,93,.15); --t-lichen:rgba(105,133,113,.16); --t-stone:rgba(91,119,133,.15); --t-dusk:rgba(124,108,140,.15); --t-amber:rgba(184,129,50,.16);
+  --hi:#4C7B5D; --mid:#9A7B2C; --lo:#7B6A90; --warn:#9A4F4A;
   --ease:cubic-bezier(.22,.7,.2,1);
   --serif:'Marcellus',Georgia,'Times New Roman',serif;
   --sans:'Mulish',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
@@ -29,24 +29,24 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#131A1B; --paper:#1A2223; --ink:#E7EBE6; --ink2:#AAB5B2; --ink3:#7E8B89; --line:#2C3637; --line2:#243030; --fill:#222C2D;
-    --bark:#B79F89; --lichen:#95AE9C; --stone:#8AA5B4; --dusk:#AC9DBA; --amber:#DBA657;
-    --t-bark:rgba(183,159,137,.14); --t-lichen:rgba(149,174,156,.15); --t-stone:rgba(138,165,180,.15); --t-dusk:rgba(172,157,186,.15); --t-amber:rgba(219,166,87,.15);
-    --hi:#8DBD9B; --mid:#D6B667; --lo:#B3A3C7; --warn:#D08A83;
+    --bg:#111718; --paper:#182021; --ink:#E9EDE8; --ink2:#AFB9B6; --ink3:#808E8C; --line:#2A3435; --line2:#222C2C; --fill:#202829;
+    --bark:#C2A992; --lichen:#9CB3A3; --stone:#92ACB8; --dusk:#B2A3BF; --amber:#E2AE5F;
+    --t-bark:rgba(194,169,146,.16); --t-lichen:rgba(156,179,163,.17); --t-stone:rgba(146,172,184,.16); --t-dusk:rgba(178,163,191,.16); --t-amber:rgba(226,174,95,.17);
+    --hi:#93C4A8; --mid:#E0BF70; --lo:#BAA8CE; --warn:#D9928C;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#131A1B; --paper:#1A2223; --ink:#E7EBE6; --ink2:#AAB5B2; --ink3:#7E8B89; --line:#2C3637; --line2:#243030; --fill:#222C2D;
-  --bark:#B79F89; --lichen:#95AE9C; --stone:#8AA5B4; --dusk:#AC9DBA; --amber:#DBA657;
-  --t-bark:rgba(183,159,137,.14); --t-lichen:rgba(149,174,156,.15); --t-stone:rgba(138,165,180,.15); --t-dusk:rgba(172,157,186,.15); --t-amber:rgba(219,166,87,.15);
-  --hi:#8DBD9B; --mid:#D6B667; --lo:#B3A3C7; --warn:#D08A83;
+  --bg:#111718; --paper:#182021; --ink:#E9EDE8; --ink2:#AFB9B6; --ink3:#808E8C; --line:#2A3435; --line2:#222C2C; --fill:#202829;
+  --bark:#C2A992; --lichen:#9CB3A3; --stone:#92ACB8; --dusk:#B2A3BF; --amber:#E2AE5F;
+  --t-bark:rgba(194,169,146,.16); --t-lichen:rgba(156,179,163,.17); --t-stone:rgba(91,119,133,.15); --t-dusk:rgba(178,163,191,.16); --t-amber:rgba(226,174,95,.17);
+  --hi:#93C4A8; --mid:#E0BF70; --lo:#BAA8CE; --warn:#D9928C;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none !important}
-html{background:var(--bg);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-tap-highlight-color:transparent;min-height:100vh}
+html{background:var(--bg);background-image:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.45) 0%, transparent 75%);scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);-webkit-text-size-adjust:100%}
+body{margin:0;background:transparent;color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-tap-highlight-color:transparent;min-height:100vh}
 button{font:inherit;color:inherit;cursor:pointer}
 h1,h2,h3,h4,p{margin:0}
 svg{display:block}
@@ -111,14 +111,75 @@ svg{display:block}
 .sky{width:100%;height:auto;display:block;overflow:visible;pointer-events:none}
 .sky .glow-outer{animation:skyBreathe 7s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
 .sky .glow-inner{animation:skyPulse 5s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
-.sky .star{animation:starTwinkle 3.2s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
-.sky .star:nth-child(2n){animation-delay:0.7s;animation-duration:4.1s}
-.sky .star:nth-child(3n){animation-delay:1.4s;animation-duration:2.8s}
-.sky .star:nth-child(5n){animation-delay:2.1s;animation-duration:3.6s}
+.sky .star{animation:starTwinkle 3.2s ease-in-out infinite alternate, starDrift1 22s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
+.sky .star.drift-1{animation:starTwinkle 3.2s ease-in-out infinite alternate, starDrift1 22s ease-in-out infinite alternate}
+.sky .star.drift-2{animation:starTwinkle 4.1s ease-in-out infinite alternate, starDrift2 26s ease-in-out infinite alternate;animation-delay:0.8s, 2s}
+.sky .star.drift-3{animation:starTwinkle 2.8s ease-in-out infinite alternate, starDrift3 20s ease-in-out infinite alternate;animation-delay:1.5s, 4s}
+.sky .star.drift-4{animation:starTwinkle 3.6s ease-in-out infinite alternate, starDrift4 24s ease-in-out infinite alternate;animation-delay:2.2s, 1s}
 
 @keyframes skyBreathe{from{opacity:0.65;transform:scale(0.96)}to{opacity:0.95;transform:scale(1.05)}}
 @keyframes skyPulse{from{opacity:0.75}to{opacity:1.0}}
 @keyframes starTwinkle{from{opacity:0.25;transform:scale(0.85)}to{opacity:0.95;transform:scale(1.2)}}
+
+@keyframes starDrift1{
+  0%{transform:translate(0px,0px) scale(0.85)}
+  25%{transform:translate(4px,-3px) scale(1.1)}
+  50%{transform:translate(-2px,-5px) scale(0.95)}
+  75%{transform:translate(-4px,2px) scale(1.15)}
+  100%{transform:translate(2px,3px) scale(0.9)}
+}
+@keyframes starDrift2{
+  0%{transform:translate(0px,0px) scale(0.9)}
+  25%{transform:translate(-4px,3px) scale(1.15)}
+  50%{transform:translate(3px,4px) scale(0.85)}
+  75%{transform:translate(5px,-2px) scale(1.1)}
+  100%{transform:translate(-2px,-4px) scale(0.95)}
+}
+@keyframes starDrift3{
+  0%{transform:translate(0px,0px) scale(0.95)}
+  25%{transform:translate(3px,4px) scale(1.05)}
+  50%{transform:translate(-4px,1px) scale(1.2)}
+  75%{transform:translate(2px,-4px) scale(0.85)}
+  100%{transform:translate(-3px,2px) scale(1.1)}
+}
+@keyframes starDrift4{
+  0%{transform:translate(0px,0px) scale(0.85)}
+  25%{transform:translate(-3px,-4px) scale(1.2)}
+  50%{transform:translate(4px,-1px) scale(0.9)}
+  75%{transform:translate(-2px,4px) scale(1.15)}
+  100%{transform:translate(3px,-2px) scale(0.95)}
+}
+
+@media (hover: hover) {
+  .row, .rrow, .card, .pcard, .sopt, .diary-card, .minor .row, .banner {
+    transition: transform 0.28s var(--ease), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
+  }
+  .row:hover, .rrow:hover, .minor .row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px -3px rgba(29,38,40,0.08), 0 2px 6px -1px rgba(0,0,0,0.03);
+    border-color: var(--line);
+  }
+  .card, .diary-card, .paper, .banner {
+    background: linear-gradient(168deg, rgba(255,255,255,0.7) 0%, var(--paper) 100%);
+    box-shadow: 0 4px 18px -2px rgba(29,38,40,0.04), 0 1px 3px rgba(0,0,0,0.02);
+  }
+  .card:hover, .pcard:hover, .diary-card:hover, .banner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px -4px rgba(29,38,40,0.09), 0 2px 8px -1px rgba(0,0,0,0.04);
+  }
+  .sopt:hover {
+    border-color: var(--ink3);
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px -2px rgba(0,0,0,0.05);
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+  }
+  .chip:hover {
+    transform: translateY(-1px);
+  }
+}
 .greet{margin-top:6px;color:var(--ink2);font-size:15px}
 .home-top h1{font:400 clamp(30px,8vw,38px)/1.15 var(--serif);margin-top:2px;letter-spacing:.005em}
 .rows{display:grid;gap:12px;margin:14px 0 18px}
@@ -1157,7 +1218,7 @@ function importNotesText(text){
 }
 
 async function deliverNotes(txt){
-  const name='Sadhanapada-Notes.txt';
+  const name='Notes.txt';
   if(DL){
     try{await DL.save({filename:name,data:txt});return true}
     catch(e){
@@ -1167,7 +1228,7 @@ async function deliverNotes(txt){
   }
   try{
     const f=new File([txt],name,{type:'text/plain'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Sadhanapada Personal Notes'});return true}
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Notes.txt'});return true}
   }catch(e){if(e&&e.name==='AbortError')return false}
   try{
     const u=URL.createObjectURL(new Blob([txt],{type:'text/plain'})),a=document.createElement('a');
@@ -1304,13 +1365,13 @@ function skySVG(){
     // 10 Twinkling Stars scattered across upper sky
     const starColor = isDark ? 'rgba(236, 239, 241, 0.85)' : 'rgba(120, 144, 156, 0.55)';
     const stars = [
-      {cx: 45, cy: 22, r: 1.1}, {cx: 85, cy: 38, r: 0.8}, {cx: 125, cy: 18, r: 1.3},
-      {cx: 175, cy: 32, r: 0.7}, {cx: 215, cy: 15, r: 1.2}, {cx: 255, cy: 42, r: 0.9},
-      {cx: 285, cy: 25, r: 1.0}, {cx: 65, cy: 55, r: 0.7}, {cx: 145, cy: 50, r: 0.9}, {cx: 235, cy: 58, r: 0.8}
+      {cx: 45, cy: 22, r: 1.1, cls: 'drift-1'}, {cx: 85, cy: 38, r: 0.8, cls: 'drift-2'}, {cx: 125, cy: 18, r: 1.3, cls: 'drift-3'},
+      {cx: 175, cy: 32, r: 0.7, cls: 'drift-4'}, {cx: 215, cy: 15, r: 1.2, cls: 'drift-1'}, {cx: 255, cy: 42, r: 0.9, cls: 'drift-2'},
+      {cx: 285, cy: 25, r: 1.0, cls: 'drift-3'}, {cx: 65, cy: 55, r: 0.7, cls: 'drift-4'}, {cx: 145, cy: 50, r: 0.9, cls: 'drift-1'}, {cx: 235, cy: 58, r: 0.8, cls: 'drift-2'}
     ];
 
     const starsHTML = stars.map((s, idx) =>
-      `<circle class="star" cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${starColor}" style="animation-delay:${(idx * 0.4).toFixed(1)}s"/>`
+      `<circle class="star ${s.cls}" cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${starColor}"/>`
     ).join('');
 
     // Crescent Curve Path centered at (0,0)
@@ -1812,12 +1873,41 @@ async function downloadICS(content,filename='sadhanapada-reminders.ics'){
   }catch(e){}
   return false;
 }
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function handleAddCal(remId, e){
+  const rem = REMINDERS.find(r => r.id === remId);
+  if(!rem) return;
+
+  if(isIOSDevice()){
+    if(e) e.preventDefault();
+    const ics = buildICS([rem]);
+    const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = rem.id + '-reminder.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Opening Apple Calendar... Tap Add/Save to confirm');
+  } else {
+    toast('Opening Calendar... Tap Save to confirm');
+  }
+}
+
 function remindersCardHTML(){
-  const items=REMINDERS.map(r=>'<div class="kv" style="align-items:center;padding:10px 0"><div><b>'+esc(r.label)+'</b><small style="display:block;color:var(--ink3);margin-top:2px">'+esc(r.desc)+'</small></div>'+
-    '<a class="btn sm" href="'+esc(googleCalUrl(r))+'" target="_blank" rel="noopener" data-act="addCal" data-id="'+r.id+'" style="padding:6px 12px;font-size:13px;flex:none;margin-left:8px;text-decoration:none">'+IC.bell+' Add to Calendar</a></div>').join('');
+  const items=REMINDERS.map(r=>{
+    const calUrl = isIOSDevice() ? '#' : googleCalUrl(r);
+    return '<div class="kv" style="align-items:center;padding:10px 0"><div><b>'+esc(r.label)+'</b><small style="display:block;color:var(--ink3);margin-top:2px">'+esc(r.desc)+'</small></div>'+
+      '<a class="btn sm" href="'+esc(calUrl)+'" '+(isIOSDevice()?'':'target="_blank" rel="noopener"')+' data-act="addCal" data-id="'+r.id+'" style="padding:6px 12px;font-size:13px;flex:none;margin-left:8px;text-decoration:none">'+IC.bell+' Add to Calendar</a></div>';
+  }).join('');
   return '<div class="card" style="margin-top:18px"><h3>Reminders</h3>'+items+
     '<div class="btns" style="margin-top:14px"><button class="btn pri sm" data-act="addCalAll">'+IC.bell+' Add all reminders to Calendar (.ics)</button></div>'+
-    '<p class="muted small" style="margin-top:10px">Click <b>Add to Calendar</b> on any reminder to open it directly in Google Calendar with date, time and repetition pre-filled — only click <b>Save</b> to confirm. Or download the .ics file to add all reminders at once to any calendar app.</p></div>';
+    '<p class="muted small" style="margin-top:10px">Click <b>Add to Calendar</b> on any reminder to open it in your calendar app with date, time and repetition pre-filled — only tap <b>Save/Add</b> to confirm.</p></div>';
 }
 
 /* ============ backup ============ */
@@ -2191,7 +2281,7 @@ function addParam(o){
   db.params.push(p);touch();return p;
 }
 async function deliver(txt){
-  const name='Sadhanapada-Journal.txt';
+  const name='Parameters.txt';
   if(DL){
     try{await DL.save({filename:name,data:txt});return true}
     catch(e){
@@ -2201,7 +2291,7 @@ async function deliver(txt){
   }
   try{
     const f=new File([txt],name,{type:'text/plain'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Sadhanapada journal'});return true}
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Parameters.txt'});return true}
   }catch(e){if(e&&e.name==='AbortError')return false}
   try{
     const u=URL.createObjectURL(new Blob([txt],{type:'text/plain'})),a=document.createElement('a');
@@ -2244,8 +2334,8 @@ const ACT={
       a.classList.toggle('on',!el.hidden);
     }
   },
-  addCal(a){
-    toast('Opening Calendar... Tap Save to confirm');
+  addCal(a, e){
+    handleAddCal(a.dataset.id, e);
   },
   addCalAll(){
     const ics=buildICS();
