@@ -613,14 +613,23 @@ const mark=(p,v)=>{
   return '';
 };
 
-/* ============ storage (local first) ============ */
+/* ============ storage (local first - permanent schema versioning) ============ */
+// PERMANENT CONSTANT: Do not change KEY in future updates. This guarantees user data persistence.
 const KEY='sadhanapada.v1';
 let storageOK=true, db=null, saveT=null;
 const blank=()=>({v:1,created:new Date().toISOString(),params:[],days:{},weeks:{},notes:{},meta:{lastExport:null,dirty:false,seen:{},lastDismissedBackup:null,dismissedWelcomeBackup:false}});
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
-    if(raw){const o=JSON.parse(raw);o.params=o.params||[];o.days=o.days||{};o.weeks=o.weeks||{};o.notes=o.notes||{};o.meta=Object.assign({lastExport:null,dirty:false,seen:{},lastDismissedBackup:null,dismissedWelcomeBackup:false},o.meta||{});return o}
+    if(raw){
+      const o=JSON.parse(raw);
+      o.params=Array.isArray(o.params)?o.params:[];
+      o.days=(o.days&&typeof o.days==='object')?o.days:{};
+      o.weeks=(o.weeks&&typeof o.weeks==='object')?o.weeks:{};
+      o.notes=(o.notes&&typeof o.notes==='object')?o.notes:{};
+      o.meta=Object.assign({lastExport:null,dirty:false,seen:{},lastDismissedBackup:null,dismissedWelcomeBackup:false},o.meta||{});
+      return o;
+    }
   }catch(e){storageOK=false}
   return blank();
 }
@@ -1206,13 +1215,15 @@ function buildTXT(){
   return head.join('\n')+'\n\n'+blocks.map(b=>b[1]).join('\n\n')+(blocks.length?'\n\n':'')+foot.join('\n')+'\n';
 }
 function importText(text){
-  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-DATA')===0);
+  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-DATA')>=0);
   if(!line)throw new Error('No restore data found in this text.');
-  const o=JSON.parse(line.slice(line.indexOf('{')));
+  const jsonStart=line.indexOf('{');
+  if(jsonStart<0)throw new Error('Restore data format is invalid.');
+  const o=JSON.parse(line.slice(jsonStart));
   if(!o||typeof o!=='object'||typeof o.days!=='object')throw new Error('The restore data looks damaged.');
   let nd=0,nw=0,np=0;
   (o.params||[]).forEach(p=>{if(p&&p.id&&p.name&&!P(p.id)){db.params.push(p);np++}});
-  Object.keys(o.days).forEach(k=>{
+  Object.keys(o.days||{}).forEach(k=>{
     const inc=o.days[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
     inc.t=inc.t||{};inc.a=inc.a||{};
     const cur=db.days[k];
@@ -1253,13 +1264,15 @@ function buildNotesTXT(){
 }
 
 function importNotesText(text){
-  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-NOTES-DATA')===0);
+  const line=text.split(/\r?\n/).reverse().find(l=>l.indexOf('SADHANAPADA-NOTES-DATA')>=0);
   if(!line)throw new Error('No notes restore data found in this text.');
-  const o=JSON.parse(line.slice(line.indexOf('{')));
+  const jsonStart=line.indexOf('{');
+  if(jsonStart<0)throw new Error('Restore data format is invalid.');
+  const o=JSON.parse(line.slice(jsonStart));
   if(!o||typeof o!=='object'||typeof o.notes!=='object')throw new Error('The notes restore data looks damaged.');
   let nn=0;
   db.notes=db.notes||{};
-  Object.keys(o.notes).forEach(k=>{
+  Object.keys(o.notes||{}).forEach(k=>{
     const inc=o.notes[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
     const cur=db.notes[k];
     if(!cur||(inc.at||'')>(cur.at||'')){db.notes[k]=inc;nn++}
