@@ -1548,7 +1548,11 @@ function vNotes(){
   return hdr('Personal Notes',{back:'home'})+
     '<main class="pg">'+
       dnav(isT?'Today':fmtLong(k),isT?fmtLong(k):'','ndate',k<today())+
-      (!isT?'<div style="text-align:center;margin:-2px 0 8px"><button class="chip sm" data-act="goNoteToday">Jump to Today</button></div>':'')+
+      '<div style="display:flex;justify-content:center;align-items:center;gap:8px;margin:-2px 0 10px">'+
+        (!isT?'<button class="chip sm" data-act="goNoteToday">Jump to Today</button>':'')+
+        '<button class="chip sm" data-act="openNoteDatePicker">📅 Select Date</button>'+
+        '<input type="date" id="note-date-picker" value="'+k+'" max="'+today()+'" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">'+
+      '</div>'+
       '<div class="diary-card">'+
         '<div class="diary-head">'+
           '<div><b>'+esc(dateStr)+'</b><small style="display:block;color:var(--ink3);font-size:12px;margin-top:2px" id="note-stats">'+esc(stats)+'</small></div>'+
@@ -1562,14 +1566,13 @@ function vNotes(){
           '<button class="btn sm" data-act="clearNote">Clear</button>'+
         '</div>'+
         '<textarea id="diary-text" class="diary-area" data-date="'+k+'" rows="11" placeholder="Write your thoughts, daily journal, reflection or checklist here...">'+esc(noteData.t||'')+'</textarea>'+
-        '<div class="btns" style="margin-top:12px;justify-content:space-between">'+
-          '<button class="btn sm" data-act="copyNotesTxt">'+IC.copy+' Copy All Notes</button>'+
-          '<button class="btn sm pri" data-act="saveNotesTxt">'+IC.save+' Save Notes File (.txt)</button>'+
+        '<div class="btns" style="margin-top:12px;justify-content:flex-end">'+
+          '<button class="btn sm pri" data-act="copyDayNote">'+IC.copy+' Copy Note</button>'+
         '</div>'+
       '</div>'+
       '<div class="privacy-badge" style="margin-top:16px">'+
         '<span class="ic" style="color:var(--hi)">'+IC.check+'</span>'+
-        '<span><b>100% Private:</b> Saved locally in your device storage. You don’t have to worry about data leaks.</span>'+
+        '<span><b>100% Private & Auto-Saved:</b> Saved locally on your device as you type. Everything stays on your device.</span>'+
       '</div>'+
     '</main>';
 }
@@ -2346,11 +2349,31 @@ const ACT={
   pdate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
   ndate(a){const n=addD(ui.date,+a.dataset.d);if(n>today())return;ui.date=n;render()},
   goNoteToday(){ui.date=today();render()},
+  openNoteDatePicker(){
+    const el=document.getElementById('note-date-picker');
+    if(el){
+      if(typeof el.showPicker==='function'){
+        try{el.showPicker()}catch(e){el.click()}
+      }else{
+        el.click();
+      }
+    }
+  },
   bulletNote(){const ta=document.getElementById('diary-text');if(ta)insertBullet(ta)},
   todoNote(){const ta=document.getElementById('diary-text');if(ta)insertTodo(ta)},
   timeNote(){const ta=document.getElementById('diary-text');if(ta)insertTime(ta)},
   ruleNote(){const ta=document.getElementById('diary-text');if(ta)insertRule(ta)},
   clearNote(){const ta=document.getElementById('diary-text');if(ta){ta.value='';setPersonalNote(ta.dataset.date||ui.date,'');const sv=document.getElementById('sv-diary');if(sv)sv.textContent='';const st=document.getElementById('note-stats');if(st)st.textContent=noteStats('')}},
+  async copyDayNote(){
+    const ta=document.getElementById('diary-text');
+    const text=ta?ta.value:(((db.notes||{})[ui.date]||{}).t||'');
+    if(!text||!text.trim()){
+      toast('No notes written for this date');
+      return;
+    }
+    const ok=await copyText(text);
+    toast(ok?'Note copied to clipboard':'Could not copy note');
+  },
   async saveNotesTxt(){if(await deliverNotes(buildNotesTXT())){toast('Personal Notes saved as TXT file')}},
   async copyNotesTxt(){toast(await copyText(buildNotesTXT())?'Notes copied':'Could not copy')},
   async shareNotesTxt(){try{const f=new File([buildNotesTXT()],'Sadhanapada-Notes.txt',{type:'text/plain'});await navigator.share({files:[f],title:'Sadhanapada Personal Notes'})}catch(e){if(!e||e.name!=='AbortError')toast('Sharing is not available here')}},
@@ -2461,6 +2484,16 @@ document.addEventListener('click',e=>{
   if(!a||a.disabled)return;
   const fn=ACT[a.dataset.act];
   if(fn)fn(a,e);
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(!t)return;
+  if(t.id==='note-date-picker'){
+    if(t.value&&t.value<=today()){
+      ui.date=t.value;
+      render();
+    }
+  }
 });
 document.addEventListener('input',e=>{
   const t=e.target;
