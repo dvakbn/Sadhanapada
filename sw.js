@@ -1,6 +1,6 @@
 /* Sadhanapada service worker: keeps the app working offline */
-const CACHE='sadhanapada-v5';
-const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./Guided_Yogasanas.mp3','./ANGAMARDHANA.png','./PRACTICES GUIDANCE.png','./SHAKTI CHALANA.png','./SURYA KRIYA.png','./YOGASANA.png','./ashram-contacts.jpg'];
+const CACHE='sadhanapada-v6';
+const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./Guided_Yogasanas.mp3','./ANGAMARDHANA.png','./PRACTICES GUIDANCE.png','./SHAKTI CHALANA.png','./SURYA KRIYA.png','./YOGASANA.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));
 });

@@ -113,7 +113,7 @@ svg{display:block}
 .linkbtn{background:none;border:0;padding:4px 2px;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;font-size:13.5px}
 
 /* ---------- home ---------- */
-.home-top{position:relative;padding:16px 20px 6px;overflow:hidden}
+.home-top{position:relative;padding:18px 20px 12px;overflow:hidden}
 .sky{width:100%;height:auto;display:block;overflow:visible;pointer-events:none}
 .sky .glow-outer{animation:skyBreathe 7s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
 .sky .glow-inner{animation:skyPulse 5s ease-in-out infinite alternate;transform-origin:center;transform-box:fill-box}
@@ -216,8 +216,8 @@ svg{display:block}
 .minor .row{padding:12px 14px;border-radius:18px;background:transparent;border:1px solid var(--line);gap:12px}
 .minor .ric{width:38px;height:38px}
 .minor .rt b{font-size:17px}
-.banner{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--paper);border:1px solid var(--line);margin:0 0 10px}
-.banner p{flex:1;font-size:14px;line-height:1.4}
+.banner{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:var(--paper);border:1px solid var(--line);margin:12px 0 16px;box-shadow:0 4px 16px rgba(0,0,0,0.03)}
+.banner p{flex:1;font-size:14px;line-height:1.45}
 .banner p b{font-weight:700}
 .banner.warn{border-color:var(--warn)}
 
@@ -1629,13 +1629,13 @@ function getSunMoonWidget(){
   const sm = getSunMoonData(new Date(), lat, lon);
   const items = [];
   if (showLunar && sm.tithi) {
-    items.push('<div>🌕 <b>Lunar Day:</b> '+esc(sm.tithi)+'</div>');
+    items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.cHalf+'</span><span style="line-height:1"><b>'+esc(sm.tithi)+'</b></span></span>');
   }
   if (showSun && sm.sunrise && sm.sunset) {
-    items.push('<div>🌅 <b>Sunrise:</b> '+esc(sm.sunrise)+' &nbsp;·&nbsp; 🌇 <b>Sunset:</b> '+esc(sm.sunset)+'</div>');
+    items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.sun+'</span><span style="line-height:1"><b>'+esc(sm.sunrise)+'</b> &nbsp;·&nbsp; <b>'+esc(sm.sunset)+'</b></span></span>');
   }
 
-  return '<div class="banner" style="background:var(--paper);border:1px solid var(--line);margin-bottom:12px;padding:12px 16px;border-radius:16px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--ink)">'+items.join('')+'</div>';
+  return '<div class="sky-info-strip" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px;font-size:13.5px;color:var(--ink2);line-height:1">'+items.join('<span style="opacity:0.4;margin:0 2px">•</span>')+'</div>';
 }
 
 function initLocationData(){
@@ -1676,20 +1676,19 @@ function vHome(){
       bn.push(banner(IC.save,'<b>Backup reminder.</b> Save a backup file to keep your progress safe. '+(ago!==null?'(Last saved '+ago+' days ago)':''),'Backup','backup',null,'dismissBackup'));
     }
   }
-  const sunMoonCard = getSunMoonWidget();
-  if (sunMoonCard) bn.push(sunMoonCard);
+  const sunMoonSub = getSunMoonWidget();
 
   const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
   const rows=[
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
     row('c-guided','guided',IC.audio,'Guided Yogasanas','Starts from Padahastasana (do Nadi Vibhajan first)'),
-    row('c-practices','practices','<img src="PRACTICES GUIDANCE.png" class="card-logo" alt="Practices guidance">','Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
+    row('c-practices','practices',IC.sparkles,'Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
     row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes'),
     row('c-amber','extras',IC.sparkles,'Extras','Yogic Diet, Ashram Contacts & Bus Timings')
   ].join('');
   const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="settings"><span class="ric ic">'+IC.sliders+'</span><span class="rt"><b>Settings</b></span></button></div>';
-  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
+  return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1>'+sunMoonSub+'</div><div class="pg">'+bn.join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
 }
 
 function vPractices(){
@@ -2076,7 +2075,9 @@ function remindersCardHTML(){
     return '<div class="kv" style="align-items:center;padding:10px 0"><div><b>'+esc(r.label)+'</b><small style="display:block;color:var(--ink3);margin-top:2px">'+esc(r.desc)+'</small></div>'+
       '<a class="btn sm" href="'+esc(calUrl)+'" '+(isIOSDevice()?'':'target="_blank" rel="noopener"')+' data-act="addCal" data-id="'+r.id+'" style="padding:6px 12px;font-size:13px;flex:none;margin-left:8px;text-decoration:none">'+IC.bell+' Add to Calendar</a></div>';
   }).join('');
-  return '<div class="card" style="margin-top:18px"><h3>Reminders</h3>'+items+
+  return '<div class="card" style="margin-top:14px;margin-bottom:14px">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="ric ic" style="color:var(--stone)">'+IC.bell+'</span><div><b style="font:400 20px/1.2 var(--serif)">Calendar & Practice Reminders</b><small style="display:block;color:var(--ink2);font-size:13.5px">One-tap calendar integration for daily sadhana</small></div></div>'+
+    items+
     '<div class="btns" style="margin-top:14px"><button class="btn pri sm" data-act="addCalAll">'+IC.bell+' Add all reminders to Calendar (.ics)</button></div>'+
     '<p class="muted small" style="margin-top:10px">Click <b>Add to Calendar</b> on any reminder to open it in your calendar app with date, time and repetition pre-filled — only tap <b>Save/Add</b> to confirm.</p></div>';
 }
@@ -2096,10 +2097,11 @@ function vSettings(){
   return hdr('Settings', { back: 'home' }) + '<main class="pg">' +
     '<div class="privacy-badge" style="margin-bottom:14px">' +
       '<span class="ic" style="color:var(--hi)">' + IC.check + '</span>' +
-      '<span><b>100% Private & Local:</b> Your settings and data are stored on this device only.</span>' +
+      '<span><b>100% Private & Local:</b> Your settings and data stay completely on this device.</span>' +
     '</div>' +
 
-    '<div class="card" style="margin-bottom:14px"><h3>1. Backup & Data Files</h3>' +
+    '<div class="card" style="margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="ric ic" style="color:var(--bark)">' + IC.save + '</span><div><b style="font:400 20px/1.2 var(--serif)">Backup & Data Files</b><small style="display:block;color:var(--ink2);font-size:13.5px">Save journal files, diary & restore backup</small></div></div>' +
       '<div class="kv"><span>Days recorded</span><span>' + nDays + '</span></div>' +
       '<div class="kv"><span>Answers saved</span><span>' + nR + '</span></div>' +
       '<div class="kv"><span>Last saved</span><span>' + (last ? esc(fmtDT(last)) : 'Not yet') + '</span></div>' +
@@ -2121,109 +2123,152 @@ function vSettings(){
       '<div class="btns"><button class="btn sm" data-act="pickFile">' + IC.upload + ' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>' +
     '</div>' +
 
-    '<div class="card" style="margin-bottom:14px"><h3>2. Lunar Day (Tithi)</h3>' +
-      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 12px">Display current Tithi (e.g., Shukla Ekadashi, Purnima) on the home screen automatically.</p>' +
-      '<div style="display:flex;justify-content:space-between;align-items:center">' +
-        '<span style="font-weight:700;font-size:14.5px">Lunar Day Widget</span>' +
+    remindersCardHTML() +
+
+    '<div class="card" style="margin-top:14px;margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="ric ic" style="color:var(--amber)">' + IC.sliders + '</span><div><b style="font:400 20px/1.2 var(--serif)">Display Preferences</b><small style="display:block;color:var(--ink2);font-size:13.5px">Control home screen sky information</small></div></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line2)">' +
+        '<div><b style="display:block;font-size:14.5px">Lunar Day (Tithi)</b><small style="color:var(--ink3)">Shows Tithi e.g. Shukla Ekadashi</small></div>' +
         '<button class="btn sm ' + (showLunar ? 'pri' : '') + '" data-act="toggleLunar">' + (showLunar ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
       '</div>' +
-    '</div>' +
-
-    '<div class="card" style="margin-bottom:14px"><h3>3. Sunrise & Sunset Time</h3>' +
-      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 12px">Display daily Sunrise and Sunset times calculated automatically from device location.</p>' +
-      '<div style="display:flex;justify-content:space-between;align-items:center">' +
-        '<span style="font-weight:700;font-size:14.5px">Sunrise/Sunset Widget</span>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px">' +
+        '<div><b style="display:block;font-size:14.5px">Sunrise & Sunset Time</b><small style="color:var(--ink3)">Calculated from device location</small></div>' +
         '<button class="btn sm ' + (showSun ? 'pri' : '') + '" data-act="toggleSunTime">' + (showSun ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
       '</div>' +
     '</div>' +
 
-    remindersCardHTML() +
     '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
 }
 
 /* ============ extras ============ */
 function vExtras(){
-  const tab = ui.etab || 'diet';
-  const chips = tabs([['diet','Yogic Diet'],['contacts','Contacts & Timings']], tab, 'etab');
-  let content = '';
+  const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
+  const cards=[
+    row('c-amber','extras/diet',IC.leaf,'Yogic Diet','Official Yogic Diet PDF document & guidelines'),
+    row('c-dusk','extras/contacts',IC.bell,'Contacts & Timings','Verified Ashram contacts and complete bus schedules')
+  ].join('');
 
-  if (tab === 'diet') {
-    content = '<div class="card" style="margin-top:10px">'+
-      '<h3>Yogic & Therapeutic Diet Guidance</h3>'+
-      '<p style="color:var(--ink2);font-size:14px;margin-top:4px">Guidelines for vitality, digestion, and body-mind harmony.</p>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Daily Meal Guidance</h3>'+
-        '<ul class="pul" style="margin-top:8px">'+
-          '<li><b>7:00–7:30 am (Early Morning):</b> Warm jeera or methi water, or fresh <b>White Ashgourd juice</b> on an empty stomach. Small handful of soaked mixed seeds (flax + pumpkin) or soaked almonds.</li>'+
-          '<li><b>9:30–10:30 am (Breakfast):</b> Idli (2–3, ragi/oats) with vegetable sambar & coconut chutney, or Pesarattu (2) with chutney, or Besan / Moong dal chilla. Eat a banana at breakfast.</li>'+
-          '<li><b>1:30–2:30 pm (Lunch):</b> Start meal with fresh salad. Moderate portion of rice (1 cup), Dal/Pappu, green leafy vegetables (palak, methi), curd or unsalted thin buttermilk with curry leaves & coriander. Replace pickle with a wedge of lemon.</li>'+
-          '<li><b>5:00–6:00 pm (Evening Snack):</b> 1 cup ginger-tulsi herbal tea or tender coconut water. Roasted makhana, unsalted peanuts, roasted chickpeas, cucumber with hummus, or an apple/pear.</li>'+
-          '<li><b>8:30–9:00 pm (Dinner):</b> Mandatory light meal (do not skip dinner). Vegetable soup + 1 roti, moong dal khichdi, dalia, or ragi mudde with sambar.</li>'+
-        '</ul>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Foods to Actively Add</h3>'+
-        '<ul class="pul" style="margin-top:8px">'+
-          '<li><b>Leafy Greens:</b> Palak, methi (high potassium & magnesium).</li>'+
-          '<li><b>Whole Grains:</b> Ragi, bajra, dalia (magnesium rich).</li>'+
-          '<li><b>Seeds & Nuts:</b> Pumpkin seeds, flaxseeds, soaked almonds.</li>'+
-          '<li><b>Fresh Produce:</b> Ashgourd juice, amla/citrus, banana at breakfast.</li>'+
-          '<li><b>Dairy & Beverages:</b> Daily curds/buttermilk, plain tender coconut water.</li>'+
-        '</ul>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Foods to Reduce or Avoid</h3>'+
-        '<ul class="pul" style="margin-top:8px">'+
-          '<li><b>High Sodium:</b> Pickles, papad, processed salt.</li>'+
-          '<li><b>Refined Flour:</b> Poori, maida snacks, refined semolina upma.</li>'+
-          '<li><b>Fried & Processed:</b> Murukku, chips, chakkli, fried snacks.</li>'+
-          '<li><b>Sugars & Withdrawal:</b> Added sugar in tea/coffee, abrupt caffeine withdrawal.</li>'+
-        '</ul>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Hydration & Lifestyle Notes</h3>'+
-        '<ul class="pul" style="margin-top:8px">'+
-          '<li><b>Hydration:</b> Drink 2.5–3 Liters of water daily.</li>'+
-          '<li><b>Consistent Sleep:</b> Maintain a regular sleep schedule.</li>'+
-          '<li><b>No Meal Skipping:</b> Structured 5:00 PM snack prevents evening stress-eating cravings.</li>'+
-        '</ul>'+
-      '</div>';
-  } else {
-    content = '<div class="card" style="margin-top:10px">'+
-      '<h3>Ashram Contacts & Bus Timings</h3>'+
-      '<p style="color:var(--ink2);font-size:14px;margin-top:4px">Verified contact numbers, email addresses, and bus schedules for Isha Yoga Center.</p>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Official Poster Preview</h3>'+
-        '<div style="text-align:center;margin-top:10px">'+
-          '<img src="ashram-contacts.jpg" alt="Ashram Contacts & Bus Timings" style="width:100%;max-width:480px;height:auto;border-radius:14px;border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,0.08)">'+
-        '</div>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Ashram Contacts</h3>'+
-        '<div class="kv"><span>Donations & Annadanam</span><span><b>83000 83111</b> / 84484 47707</span></div>'+
-        '<div class="kv"><span>Donations Email</span><span>donations@ishafoundation.org</span></div>'+
-        '<div class="kv"><span>Isha Clinic</span><span><b>94425 04648</b></span></div>'+
-        '<div class="kv"><span>Isha Home School</span><span>0422 251 5444 / 5</span></div>'+
-        '<div class="kv"><span>Isha Samskriti</span><span>0422 251 5480</span></div>'+
-        '<div class="kv"><span>Isha Health Solutions</span><span><b>83000 45333</b></span></div>'+
-        '<div class="kv"><span>Taxi Booking</span><span>94426 15436 / 34</span></div>'+
-        '<div class="kv"><span>Emergency Contact</span><span><b>83001 00100</b></span></div>'+
-        '<div class="kv"><span>Isha Bengaluru</span><span>94937 41212 / 73058 26660</span></div>'+
-      '</div>'+
-      '<div class="card" style="margin-top:12px">'+
-        '<h3>Bus Schedule (14D / 14G / 14A / 14C)</h3>'+
-        '<h4 class="ph" style="margin-top:10px">Isha Yoga Center ➔ Gandhipuram</h4>'+
-        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)">05:20 (14D), 05:55 (14D), 06:00 (14G), 06:50 (14D), 07:25 (14D), 08:30 (14D), 09:00 (14G), 09:50 (14D), 10:40 (14D), 10:50 (14C), 11:45 (14D), 12:40 (14D), 13:55 (14G), 14:10 (14D), 15:00 (14D), 15:20 (14C), 15:50 (14D), 16:20 (14D), 17:25 (14D), 18:15 (14D), 18:25 (14G), 19:15 (14D), 20:00 (14G), 20:05 (14D Halt), 21:00 (14D), 21:40 (14G Halt), 21:50 (14A Halt), 22:10 (14D Halt).</p>'+
-        '<h4 class="ph" style="margin-top:12px">Gandhipuram ➔ Isha Yoga Center</h4>'+
-        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)">05:40 (14A), 07:00 (14D), 07:25 (14G), 08:25 (14D), 08:50 (14D), 09:00 (14D), 09:20 (14C), 10:15 (14D), 11:15 (14D), 11:45 (14D), 12:20 (14G), 12:45 (14D), 13:25 (14D), 13:40 (14C), 14:30 (14D), 15:20 (14G), 15:55 (14D), 17:00 (14G), 17:30 (14D), 18:20 (14C), 19:10 (14D), 20:30 (14C).</p>'+
-        '<h4 class="ph" style="margin-top:12px">Isha Bengaluru Bus Timings</h4>'+
-        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)"><b>Sarpa Vasal Area to Bengaluru:</b> 20:30<br><b>Bengaluru to Sarpa Vasal Parking:</b> 22:30<br><b>Contacts:</b> 94937 41212 / 73058 26660</p>'+
-      '</div>';
-  }
+  return hdr('Extras',{back:'home'})+
+    '<main class="pg">'+
+      '<p class="muted small" style="margin:10px 0 16px;line-height:1.5">Select a section below to view diet guidance or ashram contacts & bus schedules:</p>'+
+      '<div class="rows">'+cards+'</div>'+
+    '</main>';
+}
 
-  return hdr('Extras', { back: 'home', sub: chips }) + '<main class="pg">' + content + '</main>';
+function vExtrasDiet(){
+  return hdr('Yogic Diet', { back: 'extras' }) +
+    '<main class="pg">' +
+      '<div class="card" style="margin-top:10px">' +
+        '<h3>Official Yogic Diet Document</h3>' +
+        '<p style="color:var(--ink2);font-size:14px;line-height:1.5;margin-top:6px;margin-bottom:14px">' +
+          'PDF File Name: <b><code>yogic-diet.pdf</code></b><br>' +
+          'Please place your <b><code>yogic-diet.pdf</code></b> file directly inside the app folder to view it here anytime.' +
+        '</p>' +
+        '<div style="width:100%;height:68vh;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper)">' +
+          '<object data="yogic-diet.pdf" type="application/pdf" width="100%" height="100%">' +
+            '<iframe src="yogic-diet.pdf" width="100%" height="100%" style="border:0">' +
+              '<div style="padding:24px;text-align:center">' +
+                '<p style="color:var(--ink2);font-size:14.5px">Save your PDF file as <b><code>yogic-diet.pdf</code></b> in the app folder.</p>' +
+                '<a href="yogic-diet.pdf" class="btn sm pri" style="margin-top:12px" target="_blank">Open PDF File</a>' +
+              '</div>' +
+            '</iframe>' +
+          '</object>' +
+        '</div>' +
+        '<div class="btns" style="margin-top:14px;justify-content:center">' +
+          '<a href="yogic-diet.pdf" target="_blank" class="btn sm pri">' + IC.eye + ' Open PDF in Full Screen</a>' +
+        '</div>' +
+      '</div>' +
+    '</main>';
+}
+
+function vExtrasContacts(){
+  return hdr('Contacts & Timings', { back: 'extras' }) +
+    '<main class="pg">' +
+      '<div class="card" style="margin-top:10px">' +
+        '<h3>Emergency & Quick Help</h3>' +
+        '<div class="kv"><span>Emergency Contact</span><span><a href="tel:8300100100" style="color:var(--hi);text-decoration:none"><b>83001 00100</b></a></span></div>' +
+        '<div class="kv"><span>Isha Clinic</span><span><a href="tel:04222515448" style="color:var(--hi);text-decoration:none"><b>94425 04648</b></a></span></div>' +
+        '<div class="kv"><span>Taxi Booking</span><span><b>94426 15436</b> / 34</span></div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-top:12px">' +
+        '<h3>Ashram Departments & Services</h3>' +
+        '<div class="kv"><span>Donations & Annadanam</span><span><b>83000 83111</b> / 84484 47707</span></div>' +
+        '<div class="kv"><span>Donations Email</span><span>donations@ishafoundation.org</span></div>' +
+        '<div class="kv"><span>Isha Health Solutions</span><span><b>83000 45333</b></span></div>' +
+        '<div class="kv"><span>Isha Home School</span><span>0422 251 5444 / 5</span></div>' +
+        '<div class="kv"><span>Isha Samskriti</span><span>0422 251 5480</span></div>' +
+        '<div class="kv"><span>Isha Bengaluru Booking</span><span>94937 41212 / 73058 26660</span></div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-top:12px">' +
+        '<h3>Coimbatore Bus Schedule (14D / 14G / 14A / 14C)</h3>' +
+        '<h4 class="ph" style="margin-top:10px;margin-bottom:8px">Isha Yoga Center ➔ Gandhipuram</h4>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">' +
+          '<span class="chip sm">05:20 (14D)</span>' +
+          '<span class="chip sm">05:55 (14D)</span>' +
+          '<span class="chip sm">06:00 (14G)</span>' +
+          '<span class="chip sm">06:50 (14D)</span>' +
+          '<span class="chip sm">07:25 (14D)</span>' +
+          '<span class="chip sm">08:30 (14D)</span>' +
+          '<span class="chip sm">09:00 (14G)</span>' +
+          '<span class="chip sm">09:50 (14D)</span>' +
+          '<span class="chip sm">10:40 (14D)</span>' +
+          '<span class="chip sm">10:50 (14C)</span>' +
+          '<span class="chip sm">11:45 (14D)</span>' +
+          '<span class="chip sm">12:40 (14D)</span>' +
+          '<span class="chip sm">13:55 (14G)</span>' +
+          '<span class="chip sm">14:10 (14D)</span>' +
+          '<span class="chip sm">15:00 (14D)</span>' +
+          '<span class="chip sm">15:20 (14C)</span>' +
+          '<span class="chip sm">15:50 (14D)</span>' +
+          '<span class="chip sm">16:20 (14D)</span>' +
+          '<span class="chip sm">17:25 (14D)</span>' +
+          '<span class="chip sm">18:15 (14D)</span>' +
+          '<span class="chip sm">18:25 (14G)</span>' +
+          '<span class="chip sm">19:15 (14D)</span>' +
+          '<span class="chip sm">20:00 (14G)</span>' +
+          '<span class="chip sm">20:05 (14D Halt)</span>' +
+          '<span class="chip sm">21:00 (14D)</span>' +
+          '<span class="chip sm">21:40 (14G Halt)</span>' +
+          '<span class="chip sm">21:50 (14A Halt)</span>' +
+          '<span class="chip sm">22:10 (14D Halt)</span>' +
+        '</div>' +
+
+        '<h4 class="ph" style="margin-top:10px;margin-bottom:8px">Gandhipuram ➔ Isha Yoga Center</h4>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+          '<span class="chip sm">05:40 (14A)</span>' +
+          '<span class="chip sm">07:00 (14D)</span>' +
+          '<span class="chip sm">07:25 (14G)</span>' +
+          '<span class="chip sm">08:25 (14D)</span>' +
+          '<span class="chip sm">08:50 (14D)</span>' +
+          '<span class="chip sm">09:00 (14D)</span>' +
+          '<span class="chip sm">09:20 (14C)</span>' +
+          '<span class="chip sm">10:15 (14D)</span>' +
+          '<span class="chip sm">11:15 (14D)</span>' +
+          '<span class="chip sm">11:45 (14D)</span>' +
+          '<span class="chip sm">12:20 (14G)</span>' +
+          '<span class="chip sm">12:45 (14D)</span>' +
+          '<span class="chip sm">13:25 (14D)</span>' +
+          '<span class="chip sm">13:40 (14C)</span>' +
+          '<span class="chip sm">14:30 (14D)</span>' +
+          '<span class="chip sm">15:20 (14G)</span>' +
+          '<span class="chip sm">15:55 (14D)</span>' +
+          '<span class="chip sm">17:00 (14G)</span>' +
+          '<span class="chip sm">17:30 (14D)</span>' +
+          '<span class="chip sm">18:20 (14C)</span>' +
+          '<span class="chip sm">19:10 (14D)</span>' +
+          '<span class="chip sm">20:30 (14C)</span>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-top:12px">' +
+        '<h3>Isha Bengaluru Direct Bus Service</h3>' +
+        '<div class="kv"><span>Sarpa Vasal to Bengaluru</span><span><b>20:30</b></span></div>' +
+        '<div class="kv"><span>Bengaluru to Sarpa Vasal</span><span><b>22:30</b></span></div>' +
+        '<div class="kv"><span>Booking Contacts</span><span><b>94937 41212</b> / <b>73058 26660</b></span></div>' +
+      '</div>' +
+    '</main>';
 }
 function vJournal(){
   return hdr('Journal',{back:'settings'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
@@ -2512,7 +2557,7 @@ function render(anim){
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
       case 'settings':case 'backup':h=vSettings();break;
-      case 'extras':h=vExtras();break;
+      case 'extras':h=parts[1]==='diet'?vExtrasDiet():(parts[1]==='contacts'?vExtrasContacts():vExtras());break;
       case 'journal':h=vJournal();break;
       case 'notes-file':h=vNotesFile();break;
       default:h=vHome();
