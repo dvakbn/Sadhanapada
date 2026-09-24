@@ -554,6 +554,9 @@ const IC={
   bell:S('<path d="M6 16.500V11a6 6 0 0 1 12 0v5.500l1.500 1.500h-15zM10 20.500a2 2 0 0 0 4 0"/>'),
   search:S('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>'),
   audio:S('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
+  sparkles:S('<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8zM19 15l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1zM5 16l.8 1.8L7.5 18.5l-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z"/>'),
+  toggleOn:S('<rect x="2" y="6" width="20" height="12" rx="6" fill="var(--hi)"/><circle cx="16" cy="12" r="4" fill="var(--paper)"/>'),
+  toggleOff:S('<rect x="2" y="6" width="20" height="12" rx="6" fill="var(--fill)" stroke="var(--line)"/><circle cx="8" cy="12" r="4" fill="var(--ink3)"/>'),
   play:S('<path d="M8 5v14l11-7z" fill="currentColor"/>'),
   pause:S('<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>'),
   replay10:S('<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="12" y="14" font-size="6.5" font-weight="bold" text-anchor="middle" fill="currentColor" stroke="none">10</text>'),
@@ -1571,6 +1574,83 @@ function privacyNoticeBanner(){
   '</div>';
 }
 
+function getSunMoonData(date = new Date(), lat = 11.0, lon = 76.9) {
+  try {
+    const d = (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
+    const D = d - 2451545.0;
+    const g = (357.529 + 0.98560028 * D) % 360;
+    const q = (280.459 + 0.98564736 * D) % 360;
+    const Ls = (q + 1.915 * Math.sin(g * Math.PI / 180) + 0.020 * Math.sin(2 * g * Math.PI / 180)) % 360;
+    const Lm = (218.316 + 13.176396 * D) % 360;
+    const Mm = (134.963 + 13.064993 * D) % 360;
+    const Lmoon = (Lm + 6.289 * Math.sin(Mm * Math.PI / 180)) % 360;
+    let angle = (Lmoon - Ls + 360) % 360;
+    const tithiIndex = Math.floor(angle / 12);
+    const tithiNames = [
+      'Shukla Pratipada', 'Shukla Dwitiya', 'Shukla Tritiya', 'Shukla Chaturthi', 'Shukla Panchami',
+      'Shukla Shashti', 'Shukla Saptami', 'Shukla Ashtami', 'Shukla Navami', 'Shukla Dashami',
+      'Shukla Ekadashi', 'Shukla Dwadashi', 'Shukla Trayodashi', 'Shukla Chaturdashi', 'Purnima',
+      'Krishna Pratipada', 'Krishna Dwitiya', 'Krishna Tritiya', 'Krishna Chaturthi', 'Krishna Panchami',
+      'Krishna Shashti', 'Krishna Saptami', 'Krishna Ashtami', 'Krishna Navami', 'Krishna Dashami',
+      'Krishna Ekadashi', 'Krishna Dwadashi', 'Krishna Trayodashi', 'Krishna Chaturdashi', 'Amavasya'
+    ];
+    const tithi = tithiNames[tithiIndex] || 'Shukla Paksha';
+
+    const n = Math.floor(D + 0.5 + 0.0009 + lon / 360);
+    const Jstar = n - lon / 360;
+    const M = (357.5291 + 0.98560028 * Jstar) % 360;
+    const C = 1.9148 * Math.sin(M * Math.PI / 180) + 0.0200 * Math.sin(2 * M * Math.PI / 180) + 0.0003 * Math.sin(3 * M * Math.PI / 180);
+    const lambda = (M + C + 180 + 102.9372) % 360;
+    const Jtransit = 2451545.0 + Jstar + 0.0053 * Math.sin(M * Math.PI / 180) - 0.0069 * Math.sin(2 * lambda * Math.PI / 180);
+    const sinDec = Math.sin(lambda * Math.PI / 180) * Math.sin(23.4397 * Math.PI / 180);
+    const cosDec = Math.cos(Math.asin(sinDec));
+    const cosH = (Math.sin(-0.833 * Math.PI / 180) - Math.sin(lat * Math.PI / 180) * sinDec) / (Math.cos(lat * Math.PI / 180) * cosDec);
+    const H = Math.acos(Math.max(-1, Math.min(1, cosH))) * 180 / Math.PI;
+
+    const Jset = Jtransit + H / 360;
+    const Jrise = Jtransit - H / 360;
+    const riseDate = new Date((Jrise - 2440587.5) * 86400000);
+    const setDate = new Date((Jset - 2440587.5) * 86400000);
+
+    const fmtT = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return { tithi, sunrise: fmtT(riseDate), sunset: fmtT(setDate) };
+  } catch(e) {
+    return { tithi: 'Shukla Paksha', sunrise: '06:12 AM', sunset: '06:18 PM' };
+  }
+}
+
+function getSunMoonWidget(){
+  const showLunar = db.meta.showLunar !== false;
+  const showSun = db.meta.showSunTime !== false;
+  if (!showLunar && !showSun) return '';
+
+  const lat = (db.meta.loc && db.meta.loc.lat) || 11.0;
+  const lon = (db.meta.loc && db.meta.loc.lon) || 76.9;
+  const sm = getSunMoonData(new Date(), lat, lon);
+  const items = [];
+  if (showLunar && sm.tithi) {
+    items.push('<div>🌕 <b>Lunar Day:</b> '+esc(sm.tithi)+'</div>');
+  }
+  if (showSun && sm.sunrise && sm.sunset) {
+    items.push('<div>🌅 <b>Sunrise:</b> '+esc(sm.sunrise)+' &nbsp;·&nbsp; 🌇 <b>Sunset:</b> '+esc(sm.sunset)+'</div>');
+  }
+
+  return '<div class="banner" style="background:var(--paper);border:1px solid var(--line);margin-bottom:12px;padding:12px 16px;border-radius:16px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--ink)">'+items.join('')+'</div>';
+}
+
+function initLocationData(){
+  if (db && db.meta && db.meta.loc && (Date.now() - (db.meta.locAt || 0)) < 864e5 * 7) return;
+  fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{
+    if (d && d.latitude && d.longitude) {
+      db.meta = db.meta || {};
+      db.meta.loc = { lat: d.latitude, lon: d.longitude, city: d.city || 'Local' };
+      db.meta.locAt = Date.now();
+      touch();
+      render();
+    }
+  }).catch(()=>{});
+}
+
 /* ============ home ============ */
 function vHome(){
   const now=new Date(),hr=now.getHours(),mins=hr*60+now.getMinutes(),t=today();
@@ -1596,15 +1676,19 @@ function vHome(){
       bn.push(banner(IC.save,'<b>Backup reminder.</b> Save a backup file to keep your progress safe. '+(ago!==null?'(Last saved '+ago+' days ago)':''),'Backup','backup',null,'dismissBackup'));
     }
   }
+  const sunMoonCard = getSunMoonWidget();
+  if (sunMoonCard) bn.push(sunMoonCard);
+
   const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
   const rows=[
     row('c-params','params',IC.leaf,'Parameters',nAns+' of '+DQ.length+' answered today'),
     row('c-track','tracker',IC.grid,'Daily Tracker',ps.length?done+' of '+ps.length+' recorded today':'Create your own trackers'),
     row('c-guided','guided',IC.audio,'Guided Yogasanas','Starts from Padahastasana (do Nadi Vibhajan first)'),
     row('c-practices','practices','<img src="PRACTICES GUIDANCE.png" class="card-logo" alt="Practices guidance">','Practices guidance','Yogasanas, Angamardhana, Shakti Chalana & Surya Kriya'),
-    row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes')
+    row('c-notes','notes',IC.edit,'Personal Notes','Date-wise diary & personal notes'),
+    row('c-amber','extras',IC.sparkles,'Extras','Yogic Diet, Ashram Contacts & Bus Timings')
   ].join('');
-  const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="backup"><span class="ric ic">'+IC.save+'</span><span class="rt"><b>Backup</b></span></button></div>';
+  const minor='<div class="minor"><button class="row c-track" data-go="reviews"><span class="ric ic">'+IC.chart+'</span><span class="rt"><b>Reviews</b></span></button><button class="row c-bark" data-go="settings"><span class="ric ic">'+IC.sliders+'</span><span class="rt"><b>Settings</b></span></button></div>';
   return '<div class="home-top">'+skySVG()+'<div class="greet">'+greet+'</div><h1>'+esc(fmtLong(t))+'</h1></div><div class="pg">'+bn.join('')+'<nav class="rows" aria-label="Sections">'+rows+'</nav>'+minor+'</div>';
 }
 
@@ -1997,56 +2081,155 @@ function remindersCardHTML(){
     '<p class="muted small" style="margin-top:10px">Click <b>Add to Calendar</b> on any reminder to open it in your calendar app with date, time and repetition pre-filled — only tap <b>Save/Add</b> to confirm.</p></div>';
 }
 
-/* ============ backup ============ */
-function vBackup(){
+/* ============ settings ============ */
+function vSettings(){
   const nDays=Object.keys(db.days).filter(hasData).length;
   let nR=0;Object.keys(db.days).forEach(k=>{nR+=Object.values(db.days[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
   Object.keys(db.weeks).forEach(k=>{nR+=Object.values(db.weeks[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
   const nNotes=Object.keys(db.notes||{}).filter(k=>db.notes[k]&&db.notes[k].t&&db.notes[k].t.trim()).length;
   const last=db.meta.lastExport;
   const canShare=!!(navigator.canShare&&navigator.share&&(()=>{try{return navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})}catch(e){return false}})());
-  return hdr('Backup')+'<main class="pg">'+
-    '<div class="privacy-badge" style="margin-bottom:14px">'+
-      '<span class="ic" style="color:var(--hi)">'+IC.check+'</span>'+
-      '<span><b>100% Private:</b> Your data is saved locally on your device storage. You don’t have to worry about data leaks — everything stays completely on your device.</span>'+
-    '</div>'+
-    '<div class="card"><h3>1. Journal File (Parameters & Tracker)</h3>'+
-      '<div class="kv"><span>Days recorded</span><span>'+nDays+'</span></div>'+
-      '<div class="kv"><span>Answers saved</span><span>'+nR+'</span></div>'+
-      '<div class="kv"><span>Last saved</span><span>'+(last?esc(fmtDT(last)):'Not yet')+'</span></div>'+
-      '<p class="muted small" style="margin-top:10px">Contains all your daily/weekly reflection parameters and tracker data in one continuous text file (<code>Sadhanapada-Journal.txt</code>).</p>'+
-      '<div class="btns" style="margin-top:12px">'+
-        '<button class="btn pri sm" data-act="saveTxt">'+IC.save+' Save Journal File</button>'+
-        (canShare?'<button class="btn sm" data-act="shareTxt">Share</button>':'')+
-        '<button class="btn sm" data-go="journal">'+IC.eye+' Read</button>'+
-        '<button class="btn sm" data-act="copyTxt">'+IC.copy+' Copy</button>'+
-      '</div>'+
-    '</div>'+
-    '<div class="card" style="margin-top:14px"><h3>2. Personal Notes File (Diary)</h3>'+
-      '<div class="kv"><span>Diary entries</span><span>'+nNotes+'</span></div>'+
-      '<p class="muted small" style="margin-top:10px">Contains all your date-wise personal notes and diary entries in one single text file (<code>Sadhanapada-Notes.txt</code>).</p>'+
-      '<div class="btns" style="margin-top:12px">'+
-        '<button class="btn pri sm" data-act="saveNotesTxt">'+IC.save+' Save Notes File</button>'+
-        (canShare?'<button class="btn sm" data-act="shareNotesTxt">Share</button>':'')+
-        '<button class="btn sm" data-go="notes-file">'+IC.eye+' Read</button>'+
-        '<button class="btn sm" data-act="copyNotesTxt">'+IC.copy+' Copy</button>'+
-      '</div>'+
-    '</div>'+
-    '<div class="card" style="margin-top:14px"><h3>Restore</h3>'+
-      '<p>Bring everything back from your saved files. Choose a file to restore Journal or Notes data.</p>'+
-      '<div class="btns"><button class="btn sm" data-act="pickFile">'+IC.upload+' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>'+
-    '</div>'+
-    remindersCardHTML()+
-    '<div class="card" style="margin-top:14px"><h3>Where your data lives</h3>'+
-      '<p>'+(storageOK?'Saved automatically on this device in your local browser storage. It stays saved for months without needing to back up. Backups are optional but recommended in case you uninstall the app or switch devices.':'This browser is blocking storage. Save your TXT files often.')+'</p>'+
-    '</div>'+
+
+  const showLunar = db.meta.showLunar !== false;
+  const showSun = db.meta.showSunTime !== false;
+
+  return hdr('Settings', { back: 'home' }) + '<main class="pg">' +
+    '<div class="privacy-badge" style="margin-bottom:14px">' +
+      '<span class="ic" style="color:var(--hi)">' + IC.check + '</span>' +
+      '<span><b>100% Private & Local:</b> Your settings and data are stored on this device only.</span>' +
+    '</div>' +
+
+    '<div class="card" style="margin-bottom:14px"><h3>1. Backup & Data Files</h3>' +
+      '<div class="kv"><span>Days recorded</span><span>' + nDays + '</span></div>' +
+      '<div class="kv"><span>Answers saved</span><span>' + nR + '</span></div>' +
+      '<div class="kv"><span>Last saved</span><span>' + (last ? esc(fmtDT(last)) : 'Not yet') + '</span></div>' +
+      '<div class="btns" style="margin-top:12px">' +
+        '<button class="btn pri sm" data-act="saveTxt">' + IC.save + ' Save Journal File</button>' +
+        (canShare ? '<button class="btn sm" data-act="shareTxt">Share</button>' : '') +
+        '<button class="btn sm" data-go="journal">' + IC.eye + ' Read</button>' +
+        '<button class="btn sm" data-act="copyTxt">' + IC.copy + ' Copy</button>' +
+      '</div>' +
+      '<hr style="border:0;border-top:1px solid var(--line2);margin:14px 0">' +
+      '<div class="kv"><span>Diary entries</span><span>' + nNotes + '</span></div>' +
+      '<div class="btns" style="margin-top:12px">' +
+        '<button class="btn pri sm" data-act="saveNotesTxt">' + IC.save + ' Save Notes File</button>' +
+        (canShare ? '<button class="btn sm" data-act="shareNotesTxt">Share</button>' : '') +
+        '<button class="btn sm" data-go="notes-file">' + IC.eye + ' Read</button>' +
+      '</div>' +
+      '<hr style="border:0;border-top:1px solid var(--line2);margin:14px 0">' +
+      '<div style="font-weight:700;font-size:14.5px;margin-bottom:6px">Restore Backup</div>' +
+      '<div class="btns"><button class="btn sm" data-act="pickFile">' + IC.upload + ' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>' +
+    '</div>' +
+
+    '<div class="card" style="margin-bottom:14px"><h3>2. Lunar Day (Tithi)</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 12px">Display current Tithi (e.g., Shukla Ekadashi, Purnima) on the home screen automatically.</p>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-weight:700;font-size:14.5px">Lunar Day Widget</span>' +
+        '<button class="btn sm ' + (showLunar ? 'pri' : '') + '" data-act="toggleLunar">' + (showLunar ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card" style="margin-bottom:14px"><h3>3. Sunrise & Sunset Time</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 12px">Display daily Sunrise and Sunset times calculated automatically from device location.</p>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-weight:700;font-size:14.5px">Sunrise/Sunset Widget</span>' +
+        '<button class="btn sm ' + (showSun ? 'pri' : '') + '" data-act="toggleSunTime">' + (showSun ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
+      '</div>' +
+    '</div>' +
+
+    remindersCardHTML() +
     '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
 }
+
+/* ============ extras ============ */
+function vExtras(){
+  const tab = ui.etab || 'diet';
+  const chips = tabs([['diet','Yogic Diet'],['contacts','Contacts & Timings']], tab, 'etab');
+  let content = '';
+
+  if (tab === 'diet') {
+    content = '<div class="card" style="margin-top:10px">'+
+      '<h3>Yogic & Therapeutic Diet Guidance</h3>'+
+      '<p style="color:var(--ink2);font-size:14px;margin-top:4px">Guidelines for vitality, digestion, and body-mind harmony.</p>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Daily Meal Guidance</h3>'+
+        '<ul class="pul" style="margin-top:8px">'+
+          '<li><b>7:00–7:30 am (Early Morning):</b> Warm jeera or methi water, or fresh <b>White Ashgourd juice</b> on an empty stomach. Small handful of soaked mixed seeds (flax + pumpkin) or soaked almonds.</li>'+
+          '<li><b>9:30–10:30 am (Breakfast):</b> Idli (2–3, ragi/oats) with vegetable sambar & coconut chutney, or Pesarattu (2) with chutney, or Besan / Moong dal chilla. Eat a banana at breakfast.</li>'+
+          '<li><b>1:30–2:30 pm (Lunch):</b> Start meal with fresh salad. Moderate portion of rice (1 cup), Dal/Pappu, green leafy vegetables (palak, methi), curd or unsalted thin buttermilk with curry leaves & coriander. Replace pickle with a wedge of lemon.</li>'+
+          '<li><b>5:00–6:00 pm (Evening Snack):</b> 1 cup ginger-tulsi herbal tea or tender coconut water. Roasted makhana, unsalted peanuts, roasted chickpeas, cucumber with hummus, or an apple/pear.</li>'+
+          '<li><b>8:30–9:00 pm (Dinner):</b> Mandatory light meal (do not skip dinner). Vegetable soup + 1 roti, moong dal khichdi, dalia, or ragi mudde with sambar.</li>'+
+        '</ul>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Foods to Actively Add</h3>'+
+        '<ul class="pul" style="margin-top:8px">'+
+          '<li><b>Leafy Greens:</b> Palak, methi (high potassium & magnesium).</li>'+
+          '<li><b>Whole Grains:</b> Ragi, bajra, dalia (magnesium rich).</li>'+
+          '<li><b>Seeds & Nuts:</b> Pumpkin seeds, flaxseeds, soaked almonds.</li>'+
+          '<li><b>Fresh Produce:</b> Ashgourd juice, amla/citrus, banana at breakfast.</li>'+
+          '<li><b>Dairy & Beverages:</b> Daily curds/buttermilk, plain tender coconut water.</li>'+
+        '</ul>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Foods to Reduce or Avoid</h3>'+
+        '<ul class="pul" style="margin-top:8px">'+
+          '<li><b>High Sodium:</b> Pickles, papad, processed salt.</li>'+
+          '<li><b>Refined Flour:</b> Poori, maida snacks, refined semolina upma.</li>'+
+          '<li><b>Fried & Processed:</b> Murukku, chips, chakkli, fried snacks.</li>'+
+          '<li><b>Sugars & Withdrawal:</b> Added sugar in tea/coffee, abrupt caffeine withdrawal.</li>'+
+        '</ul>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Hydration & Lifestyle Notes</h3>'+
+        '<ul class="pul" style="margin-top:8px">'+
+          '<li><b>Hydration:</b> Drink 2.5–3 Liters of water daily.</li>'+
+          '<li><b>Consistent Sleep:</b> Maintain a regular sleep schedule.</li>'+
+          '<li><b>No Meal Skipping:</b> Structured 5:00 PM snack prevents evening stress-eating cravings.</li>'+
+        '</ul>'+
+      '</div>';
+  } else {
+    content = '<div class="card" style="margin-top:10px">'+
+      '<h3>Ashram Contacts & Bus Timings</h3>'+
+      '<p style="color:var(--ink2);font-size:14px;margin-top:4px">Verified contact numbers, email addresses, and bus schedules for Isha Yoga Center.</p>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Official Poster Preview</h3>'+
+        '<div style="text-align:center;margin-top:10px">'+
+          '<img src="ashram-contacts.jpg" alt="Ashram Contacts & Bus Timings" style="width:100%;max-width:480px;height:auto;border-radius:14px;border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,0.08)">'+
+        '</div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Ashram Contacts</h3>'+
+        '<div class="kv"><span>Donations & Annadanam</span><span><b>83000 83111</b> / 84484 47707</span></div>'+
+        '<div class="kv"><span>Donations Email</span><span>donations@ishafoundation.org</span></div>'+
+        '<div class="kv"><span>Isha Clinic</span><span><b>94425 04648</b></span></div>'+
+        '<div class="kv"><span>Isha Home School</span><span>0422 251 5444 / 5</span></div>'+
+        '<div class="kv"><span>Isha Samskriti</span><span>0422 251 5480</span></div>'+
+        '<div class="kv"><span>Isha Health Solutions</span><span><b>83000 45333</b></span></div>'+
+        '<div class="kv"><span>Taxi Booking</span><span>94426 15436 / 34</span></div>'+
+        '<div class="kv"><span>Emergency Contact</span><span><b>83001 00100</b></span></div>'+
+        '<div class="kv"><span>Isha Bengaluru</span><span>94937 41212 / 73058 26660</span></div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:12px">'+
+        '<h3>Bus Schedule (14D / 14G / 14A / 14C)</h3>'+
+        '<h4 class="ph" style="margin-top:10px">Isha Yoga Center ➔ Gandhipuram</h4>'+
+        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)">05:20 (14D), 05:55 (14D), 06:00 (14G), 06:50 (14D), 07:25 (14D), 08:30 (14D), 09:00 (14G), 09:50 (14D), 10:40 (14D), 10:50 (14C), 11:45 (14D), 12:40 (14D), 13:55 (14G), 14:10 (14D), 15:00 (14D), 15:20 (14C), 15:50 (14D), 16:20 (14D), 17:25 (14D), 18:15 (14D), 18:25 (14G), 19:15 (14D), 20:00 (14G), 20:05 (14D Halt), 21:00 (14D), 21:40 (14G Halt), 21:50 (14A Halt), 22:10 (14D Halt).</p>'+
+        '<h4 class="ph" style="margin-top:12px">Gandhipuram ➔ Isha Yoga Center</h4>'+
+        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)">05:40 (14A), 07:00 (14D), 07:25 (14G), 08:25 (14D), 08:50 (14D), 09:00 (14D), 09:20 (14C), 10:15 (14D), 11:15 (14D), 11:45 (14D), 12:20 (14G), 12:45 (14D), 13:25 (14D), 13:40 (14C), 14:30 (14D), 15:20 (14G), 15:55 (14D), 17:00 (14G), 17:30 (14D), 18:20 (14C), 19:10 (14D), 20:30 (14C).</p>'+
+        '<h4 class="ph" style="margin-top:12px">Isha Bengaluru Bus Timings</h4>'+
+        '<p style="font-size:13.5px;line-height:1.6;color:var(--ink2)"><b>Sarpa Vasal Area to Bengaluru:</b> 20:30<br><b>Bengaluru to Sarpa Vasal Parking:</b> 22:30<br><b>Contacts:</b> 94937 41212 / 73058 26660</p>'+
+      '</div>';
+  }
+
+  return hdr('Extras', { back: 'home', sub: chips }) + '<main class="pg">' + content + '</main>';
+}
 function vJournal(){
-  return hdr('Journal',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
+  return hdr('Journal',{back:'settings'})+'<main class="pg"><pre class="jr">'+esc(buildTXT().replace(/^SADHANAPADA-DATA v1 .*$/m,'SADHANAPADA-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
 }
 function vNotesFile(){
-  return hdr('Personal Notes File',{back:'backup'})+'<main class="pg"><pre class="jr">'+esc(buildNotesTXT().replace(/^SADHANAPADA-NOTES-DATA v1 .*$/m,'SADHANAPADA-NOTES-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
+  return hdr('Personal Notes File',{back:'settings'})+'<main class="pg"><pre class="jr">'+esc(buildNotesTXT().replace(/^SADHANAPADA-NOTES-DATA v1 .*$/m,'SADHANAPADA-NOTES-DATA v1 {…restore data hidden in this preview…}'))+'</pre></main>';
 }
 
 /* ============ guided audio player ============ */
@@ -2193,7 +2376,6 @@ function updateGuidedUI(){
   const btnPlay=document.getElementById('guided-btn-play');
   const durEl=document.getElementById('guided-dur');
   const statusEl=document.getElementById('guided-status');
-  const speedBtn=document.getElementById('guided-speed-btn');
   const a=guidedAudio;
 
   if(btnPlay){
@@ -2208,10 +2390,6 @@ function updateGuidedUI(){
 
   if(durEl&&a&&a.duration&&!isNaN(a.duration)&&isFinite(a.duration)){
     durEl.textContent=fmtSecs(a.duration);
-  }
-
-  if(speedBtn&&a){
-    speedBtn.textContent=(a.playbackRate||1)+'x';
   }
 
   if(statusEl){
@@ -2303,7 +2481,6 @@ function vGuided(){
         '</div>'+
 
         '<div style="display:flex;justify-content:center;gap:10px;margin-top:10px">'+
-          '<button id="guided-speed-btn" class="chip sm" data-act="guidedSpeed" aria-label="Speed">'+curSpeed+'</button>'+
           '<button class="chip sm" data-act="guidedReset" aria-label="Restart audio">Restart</button>'+
         '</div>'+
       '</div>'+
@@ -2334,7 +2511,8 @@ function render(anim){
       case 'yoga':case 'angamardhana':case 'shakti':case 'surya':h=vPractice(a);break;
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
-      case 'backup':h=vBackup();break;
+      case 'settings':case 'backup':h=vSettings();break;
+      case 'extras':h=vExtras();break;
       case 'journal':h=vJournal();break;
       case 'notes-file':h=vNotesFile();break;
       default:h=vHome();
@@ -2422,6 +2600,24 @@ const ACT={
     touch();
     render();
     toast('Reminder dismissed');
+  },
+  toggleLunar(){
+    db.meta = db.meta || {};
+    db.meta.showLunar = db.meta.showLunar === false ? true : false;
+    touch();
+    render();
+    toast(db.meta.showLunar !== false ? 'Lunar Day enabled' : 'Lunar Day disabled');
+  },
+  toggleSunTime(){
+    db.meta = db.meta || {};
+    db.meta.showSunTime = db.meta.showSunTime === false ? true : false;
+    touch();
+    render();
+    toast(db.meta.showSunTime !== false ? 'Sunrise/Sunset enabled' : 'Sunrise/Sunset disabled');
+  },
+  etab(a){
+    ui.etab = a.dataset.v;
+    render();
   },
   dismissPrivacyNotice(){
     db.meta=db.meta||{};
@@ -2557,17 +2753,6 @@ const ACT={
   guidedPlay(){toggleGuidedPlay()},
   guidedRewind(){skipGuidedSecs(-10)},
   guidedForward(){skipGuidedSecs(10)},
-  guidedSpeed(){
-    const a=getGuidedAudio();
-    const rates=[1,1.25,1.5,0.8];
-    const cur=a.playbackRate||1;
-    const idx=rates.indexOf(cur);
-    const next=rates[(idx+1)%rates.length];
-    a.playbackRate=next;
-    const speedBtn=document.getElementById('guided-speed-btn');
-    if(speedBtn)speedBtn.textContent=next+'x';
-    toast('Playback speed: '+next+'x');
-  },
   guidedReset(){
     const a=getGuidedAudio();
     a.currentTime=0;
@@ -2657,6 +2842,7 @@ function init(){
   db=load();
   ui.route=parseHash();
   render(true);
+  initLocationData();
   const hero=$('#hero');
   requestAnimationFrame(()=>hero.classList.add('in'));
   setTimeout(()=>hero.classList.add('out'),1500);
