@@ -1574,16 +1574,64 @@ function privacyNoticeBanner(){
   '</div>';
 }
 
-function getSunMoonData(date = new Date(), lat = 11.0, lon = 76.9) {
+function parseUtcOffset(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return v;
+  const s = String(v).trim();
+  const m = s.match(/^([+-])?(\d{1,2}):?(\d{2})?$/);
+  if (m) {
+    const sign = m[1] === '-' ? -1 : 1;
+    const hours = parseInt(m[2], 10);
+    const mins = m[3] ? parseInt(m[3], 10) : 0;
+    return sign * (hours + mins / 60);
+  }
+  const f = parseFloat(s);
+  return isNaN(f) ? null : f;
+}
+
+function getSunMoonData(date = new Date(), lat = 11.0, lon = 76.9, timeZone = null, utcOffset = null) {
   try {
-    const d = (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
-    const D = d - 2451545.0;
+    let tz = timeZone;
+    if (!tz) {
+      if (lat >= 6 && lat <= 37 && lon >= 68 && lon <= 98) {
+        tz = 'Asia/Kolkata';
+      }
+    }
+
+    let tzOffset = parseUtcOffset(utcOffset);
+    if (tzOffset === null) {
+      if (tz) {
+        try {
+          const nowStr = date.toLocaleString('en-US', { timeZone: tz });
+          const tzDate = new Date(nowStr);
+          const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+          tzOffset = (tzDate.getTime() - utcDate.getTime()) / 3600000;
+        } catch(e) {
+          tzOffset = Math.round((lon / 15) * 2) / 2;
+        }
+      } else {
+        tzOffset = Math.round((lon / 15) * 2) / 2;
+      }
+    }
+
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    const a = Math.floor((14 - month) / 12);
+    const y = year + 4800 - a;
+    const m = month + 12 * a - 3;
+    const julianDayUTC = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+
+    const jLocalNoonUTC = julianDayUTC - 0.5 + (12 - tzOffset) / 24;
+
+    const D = jLocalNoonUTC - 2451545.0;
     const g = (357.529 + 0.98560028 * D) % 360;
     const q = (280.459 + 0.98564736 * D) % 360;
-    const Ls = (q + 1.915 * Math.sin(g * Math.PI / 180) + 0.020 * Math.sin(2 * g * Math.PI / 180)) % 360;
-    const Lm = (218.316 + 13.176396 * D) % 360;
-    const Mm = (134.963 + 13.064993 * D) % 360;
-    const Lmoon = (Lm + 6.289 * Math.sin(Mm * Math.PI / 180)) % 360;
+    const Ls = (q + 1.915 * Math.sin(g * Math.PI / 180) + 0.020 * Math.sin(2 * g * Math.PI / 180) + 360) % 360;
+    const Lm = (218.316 + 13.176396 * D + 360) % 360;
+    const Mm = (134.963 + 13.064993 * D + 360) % 360;
+    const Lmoon = (Lm + 6.289 * Math.sin(Mm * Math.PI / 180) + 360) % 360;
     let angle = (Lmoon - Ls + 360) % 360;
     const tithiIndex = Math.floor(angle / 12);
     const tithiNames = [
@@ -1596,23 +1644,47 @@ function getSunMoonData(date = new Date(), lat = 11.0, lon = 76.9) {
     ];
     const tithi = tithiNames[tithiIndex] || 'Shukla Paksha';
 
-    const n = Math.floor(D + 0.5 + 0.0009 + lon / 360);
-    const Jstar = n - lon / 360;
-    const M = (357.5291 + 0.98560028 * Jstar) % 360;
-    const C = 1.9148 * Math.sin(M * Math.PI / 180) + 0.0200 * Math.sin(2 * M * Math.PI / 180) + 0.0003 * Math.sin(3 * M * Math.PI / 180);
-    const lambda = (M + C + 180 + 102.9372) % 360;
-    const Jtransit = 2451545.0 + Jstar + 0.0053 * Math.sin(M * Math.PI / 180) - 0.0069 * Math.sin(2 * lambda * Math.PI / 180);
+    const n = julianDayUTC - 2451545.0 + 0.0008;
+    const jMean = n - lon / 360;
+    const Msol = (357.5291 + 0.98560028 * jMean) % 360;
+    const Csol = 1.9148 * Math.sin(Msol * Math.PI / 180) + 0.0200 * Math.sin(2 * Msol * Math.PI / 180) + 0.0003 * Math.sin(3 * Msol * Math.PI / 180);
+    const lambda = (Msol + Csol + 180 + 102.9372) % 360;
+    const jTransit = 2451545.0 + jMean + 0.0053 * Math.sin(Msol * Math.PI / 180) - 0.0069 * Math.sin(2 * lambda * Math.PI / 180);
+
     const sinDec = Math.sin(lambda * Math.PI / 180) * Math.sin(23.4397 * Math.PI / 180);
     const cosDec = Math.cos(Math.asin(sinDec));
     const cosH = (Math.sin(-0.833 * Math.PI / 180) - Math.sin(lat * Math.PI / 180) * sinDec) / (Math.cos(lat * Math.PI / 180) * cosDec);
-    const H = Math.acos(Math.max(-1, Math.min(1, cosH))) * 180 / Math.PI;
 
-    const Jset = Jtransit + H / 360;
-    const Jrise = Jtransit - H / 360;
-    const riseDate = new Date((Jrise - 2440587.5) * 86400000);
-    const setDate = new Date((Jset - 2440587.5) * 86400000);
+    if (cosH > 1 || cosH < -1) return { tithi, sunrise: 'Polar Night', sunset: 'Polar Day' };
 
-    const fmtT = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const Hsol = Math.acos(cosH) * 180 / Math.PI;
+    const jSet = jTransit + Hsol / 360;
+    const jRise = jTransit - Hsol / 360;
+
+    const riseDate = new Date((jRise - 2440587.5) * 86400000);
+    const setDate = new Date((jSet - 2440587.5) * 86400000);
+
+    const fmtT = (d) => {
+      if (tz) {
+        try {
+          return d.toLocaleTimeString('en-US', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }).replace(/\s+/g, ' ').trim();
+        } catch(e) {}
+      }
+      const utcMs = d.getTime();
+      const localMs = utcMs + (tzOffset * 3600000);
+      const ld = new Date(localMs);
+      let h = ld.getUTCHours();
+      let mins = ld.getUTCMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12; if (h === 0) h = 12;
+      return (h < 10 ? '0' + h : h) + ':' + (mins < 10 ? '0' + mins : mins) + ' ' + ampm;
+    };
+
     return { tithi, sunrise: fmtT(riseDate), sunset: fmtT(setDate) };
   } catch(e) {
     return { tithi: 'Shukla Paksha', sunrise: '06:12 AM', sunset: '06:18 PM' };
@@ -1624,9 +1696,13 @@ function getSunMoonWidget(){
   const showSun = db.meta.showSunTime !== false;
   if (!showLunar && !showSun) return '';
 
-  const lat = (db.meta.loc && db.meta.loc.lat) || 11.0;
-  const lon = (db.meta.loc && db.meta.loc.lon) || 76.9;
-  const sm = getSunMoonData(new Date(), lat, lon);
+  const loc = (db.meta && db.meta.loc) || {};
+  const lat = loc.lat || 11.0;
+  const lon = loc.lon || 76.9;
+  const timeZone = loc.timezone || null;
+  const utcOffset = loc.utc_offset !== undefined ? loc.utc_offset : null;
+
+  const sm = getSunMoonData(new Date(), lat, lon, timeZone, utcOffset);
   const items = [];
   if (showLunar && sm.tithi) {
     items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.cHalf+'</span><span style="line-height:1"><b>'+esc(sm.tithi)+'</b></span></span>');
@@ -1643,7 +1719,13 @@ function initLocationData(){
   fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{
     if (d && d.latitude && d.longitude) {
       db.meta = db.meta || {};
-      db.meta.loc = { lat: d.latitude, lon: d.longitude, city: d.city || 'Local' };
+      db.meta.loc = {
+        lat: d.latitude,
+        lon: d.longitude,
+        city: d.city || 'Local',
+        timezone: d.timezone || null,
+        utc_offset: d.utc_offset || null
+      };
       db.meta.locAt = Date.now();
       touch();
       render();
@@ -2150,9 +2232,24 @@ function vSettingsReminders(){
   '</main>';
 }
 
+const LOC_PRESETS = [
+  { key: 'coimbatore', city: 'Isha Yoga Center, Coimbatore', lat: 11.0, lon: 76.9, timezone: 'Asia/Kolkata', utc_offset: '+0530' },
+  { key: 'nyc', city: 'New York, USA', lat: 40.71, lon: -74.00, timezone: 'America/New_York', utc_offset: '-0400' },
+  { key: 'sfo', city: 'San Francisco, USA', lat: 37.77, lon: -122.41, timezone: 'America/Los_Angeles', utc_offset: '-0700' },
+  { key: 'london', city: 'London, UK', lat: 51.50, lon: -0.12, timezone: 'Europe/London', utc_offset: '+0100' },
+  { key: 'tokyo', city: 'Tokyo, Japan', lat: 35.67, lon: 139.65, timezone: 'Asia/Tokyo', utc_offset: '+0900' },
+  { key: 'sydney', city: 'Sydney, Australia', lat: -33.86, lon: 151.20, timezone: 'Australia/Sydney', utc_offset: '+1000' }
+];
+
 function vSettingsDisplay(){
   const showLunar = db.meta.showLunar !== false;
   const showSun = db.meta.showSunTime !== false;
+  const curLoc = (db.meta && db.meta.loc && db.meta.loc.city) ? db.meta.loc.city : 'Isha Yoga Center, Coimbatore';
+
+  const presetChips = LOC_PRESETS.map(p => {
+    const isCur = db.meta && db.meta.loc && (db.meta.loc.city === p.city || (Math.abs(db.meta.loc.lat - p.lat) < 0.1 && Math.abs(db.meta.loc.lon - p.lon) < 0.1));
+    return '<button class="chip sm ' + (isCur ? 'on' : '') + '" data-act="setLocPreset" data-key="' + p.key + '">' + esc(p.city) + '</button>';
+  }).join('');
 
   return hdr('Display Preferences', { back: 'settings' }) + '<main class="pg">' +
     '<div class="card" style="margin-top:10px">' +
@@ -2163,8 +2260,21 @@ function vSettingsDisplay(){
         '<button class="btn sm ' + (showLunar ? 'pri' : '') + '" data-act="toggleLunar">' + (showLunar ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
       '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px">' +
-        '<div><b style="display:block;font-size:14.5px">Sunrise & Sunset Time</b><small style="color:var(--ink3)">Calculated from device location</small></div>' +
+        '<div><b style="display:block;font-size:14.5px">Sunrise & Sunset Time</b><small style="color:var(--ink3)">Calculated from selected location</small></div>' +
         '<button class="btn sm ' + (showSun ? 'pri' : '') + '" data-act="toggleSunTime">' + (showSun ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card" style="margin-top:14px">' +
+      '<h3>Location Preferences</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 12px">Sunrise, sunset, and lunar day times calculate directly for your selected local timezone.</p>' +
+      '<div class="kv" style="margin-bottom:12px"><span>Selected Location</span><span><b>' + esc(curLoc) + '</b></span></div>' +
+      '<div style="font-weight:600;font-size:13.5px;color:var(--ink2);margin-bottom:8px">Quick Presets:</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">' +
+        presetChips +
+      '</div>' +
+      '<div class="btns">' +
+        '<button class="btn sm pri" data-act="autoDetectLoc">' + IC.sparkles + ' Auto-Detect Location</button>' +
       '</div>' +
     '</div>' +
   '</main>';
@@ -2687,6 +2797,40 @@ const ACT={
     touch();
     render();
     toast(db.meta.showSunTime !== false ? 'Sunrise/Sunset enabled' : 'Sunrise/Sunset disabled');
+  },
+  setLocPreset(a){
+    const p = LOC_PRESETS.find(x => x.key === a.dataset.key);
+    if(p) {
+      db.meta = db.meta || {};
+      db.meta.loc = Object.assign({}, p);
+      db.meta.locAt = Date.now();
+      touch();
+      render();
+      toast('Location set to ' + p.city);
+    }
+  },
+  autoDetectLoc(){
+    toast('Detecting local location & timezone...');
+    fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{
+      if (d && d.latitude && d.longitude) {
+        db.meta = db.meta || {};
+        db.meta.loc = {
+          lat: d.latitude,
+          lon: d.longitude,
+          city: (d.city ? (d.city + (d.country_name ? ', ' + d.country_name : '')) : 'Local Location'),
+          timezone: d.timezone || null,
+          utc_offset: d.utc_offset || null
+        };
+        db.meta.locAt = Date.now();
+        touch();
+        render();
+        toast('Location updated: ' + db.meta.loc.city);
+      } else {
+        toast('Location detection unavailable');
+      }
+    }).catch(()=>{
+      toast('Could not detect location');
+    });
   },
   etab(a){
     ui.etab = a.dataset.v;
