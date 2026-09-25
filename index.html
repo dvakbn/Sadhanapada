@@ -2084,6 +2084,22 @@ function remindersCardHTML(){
 
 /* ============ settings ============ */
 function vSettings(){
+  const row=(cls,go,ic,title,sub)=>'<button class="row '+cls+'" data-go="'+go+'"><span class="ric ic">'+ic+'</span><span class="rt"><b>'+title+'</b><small>'+sub+'</small></span><span class="chev">'+IC.chev+'</span></button>';
+  const cards=[
+    row('c-bark','settings/backup',IC.save,'Backup & Data Files','Save journal files, personal notes & restore backup'),
+    row('c-stone','settings/reminders',IC.bell,'Calendar & Practice Reminders','One-tap calendar integration for daily sadhana'),
+    row('c-amber','settings/display',IC.sliders,'Display Preferences','Turn ON/OFF Lunar Day (Tithi) & Sunrise/Sunset time')
+  ].join('');
+
+  return hdr('Settings',{back:'home'})+
+    '<main class="pg">'+
+      '<p class="muted small" style="margin:10px 0 16px;line-height:1.5">Select a category below to manage your backup, reminders or display preferences:</p>'+
+      '<div class="rows">'+cards+'</div>'+
+      '<p style="margin-top:24px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p>'+
+    '</main>';
+}
+
+function vSettingsBackup(){
   const nDays=Object.keys(db.days).filter(hasData).length;
   let nR=0;Object.keys(db.days).forEach(k=>{nR+=Object.values(db.days[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
   Object.keys(db.weeks).forEach(k=>{nR+=Object.values(db.weeks[k].a||{}).filter(x=>x&&x.t&&x.t.trim()).length});
@@ -2091,17 +2107,14 @@ function vSettings(){
   const last=db.meta.lastExport;
   const canShare=!!(navigator.canShare&&navigator.share&&(()=>{try{return navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]})}catch(e){return false}})());
 
-  const showLunar = db.meta.showLunar !== false;
-  const showSun = db.meta.showSunTime !== false;
-
-  return hdr('Settings', { back: 'home' }) + '<main class="pg">' +
+  return hdr('Backup & Data Files', { back: 'settings' }) + '<main class="pg">' +
     '<div class="privacy-badge" style="margin-bottom:14px">' +
       '<span class="ic" style="color:var(--hi)">' + IC.check + '</span>' +
       '<span><b>100% Private & Local:</b> Your settings and data stay completely on this device.</span>' +
     '</div>' +
 
-    '<div class="card" style="margin-bottom:14px">' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="ric ic" style="color:var(--bark)">' + IC.save + '</span><div><b style="font:400 20px/1.2 var(--serif)">Backup & Data Files</b><small style="display:block;color:var(--ink2);font-size:13.5px">Save journal files, diary & restore backup</small></div></div>' +
+    '<div class="card" style="margin-top:10px">' +
+      '<h3>Journal Data File</h3>' +
       '<div class="kv"><span>Days recorded</span><span>' + nDays + '</span></div>' +
       '<div class="kv"><span>Answers saved</span><span>' + nR + '</span></div>' +
       '<div class="kv"><span>Last saved</span><span>' + (last ? esc(fmtDT(last)) : 'Not yet') + '</span></div>' +
@@ -2111,22 +2124,40 @@ function vSettings(){
         '<button class="btn sm" data-go="journal">' + IC.eye + ' Read</button>' +
         '<button class="btn sm" data-act="copyTxt">' + IC.copy + ' Copy</button>' +
       '</div>' +
-      '<hr style="border:0;border-top:1px solid var(--line2);margin:14px 0">' +
+    '</div>' +
+
+    '<div class="card" style="margin-top:14px">' +
+      '<h3>Personal Notes File</h3>' +
       '<div class="kv"><span>Diary entries</span><span>' + nNotes + '</span></div>' +
       '<div class="btns" style="margin-top:12px">' +
         '<button class="btn pri sm" data-act="saveNotesTxt">' + IC.save + ' Save Notes File</button>' +
         (canShare ? '<button class="btn sm" data-act="shareNotesTxt">Share</button>' : '') +
         '<button class="btn sm" data-go="notes-file">' + IC.eye + ' Read</button>' +
       '</div>' +
-      '<hr style="border:0;border-top:1px solid var(--line2);margin:14px 0">' +
-      '<div style="font-weight:700;font-size:14.5px;margin-bottom:6px">Restore Backup</div>' +
-      '<div class="btns"><button class="btn sm" data-act="pickFile">' + IC.upload + ' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>' +
     '</div>' +
 
-    remindersCardHTML() +
+    '<div class="card" style="margin-top:14px">' +
+      '<h3>Restore Backup</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:4px 0 12px">Restore your journal or notes entries from a saved backup text file.</p>' +
+      '<div class="btns"><button class="btn sm" data-act="pickFile">' + IC.upload + ' Choose File</button><button class="btn sm" data-act="pasteRestore">Paste Text</button></div>' +
+    '</div>' +
+  '</main>';
+}
 
-    '<div class="card" style="margin-top:14px;margin-bottom:14px">' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="ric ic" style="color:var(--amber)">' + IC.sliders + '</span><div><b style="font:400 20px/1.2 var(--serif)">Display Preferences</b><small style="display:block;color:var(--ink2);font-size:13.5px">Control home screen sky information</small></div></div>' +
+function vSettingsReminders(){
+  return hdr('Reminders', { back: 'settings' }) + '<main class="pg">' +
+    remindersCardHTML() +
+  '</main>';
+}
+
+function vSettingsDisplay(){
+  const showLunar = db.meta.showLunar !== false;
+  const showSun = db.meta.showSunTime !== false;
+
+  return hdr('Display Preferences', { back: 'settings' }) + '<main class="pg">' +
+    '<div class="card" style="margin-top:10px">' +
+      '<h3>Home Screen Header Preferences</h3>' +
+      '<p style="font-size:14px;color:var(--ink2);margin:6px 0 14px">Control what astronomical information appears on your home screen sky header.</p>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line2)">' +
         '<div><b style="display:block;font-size:14.5px">Lunar Day (Tithi)</b><small style="color:var(--ink3)">Shows Tithi e.g. Shukla Ekadashi</small></div>' +
         '<button class="btn sm ' + (showLunar ? 'pri' : '') + '" data-act="toggleLunar">' + (showLunar ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
@@ -2136,8 +2167,7 @@ function vSettings(){
         '<button class="btn sm ' + (showSun ? 'pri' : '') + '" data-act="toggleSunTime">' + (showSun ? IC.toggleOn + ' Enabled' : IC.toggleOff + ' Disabled') + '</button>' +
       '</div>' +
     '</div>' +
-
-    '<p style="margin-top:22px"><button class="linkbtn" data-act="wipe">Erase everything on this device</button></p></main>';
+  '</main>';
 }
 
 /* ============ extras ============ */
@@ -2553,7 +2583,8 @@ function render(anim){
       case 'yoga':case 'angamardhana':case 'shakti':case 'surya':h=vPractice(a);break;
       case 'reviews':h=vReviews();break;
       case 'review':h=(/^[wm]$/.test(parts[1]||'')&&/^\d{4}-\d\d-\d\d$/.test(parts[2]||''))?vReview(parts[1],parts[2]):vReviews();break;
-      case 'settings':case 'backup':h=vSettings();break;
+      case 'settings':h=parts[1]==='backup'?vSettingsBackup():(parts[1]==='reminders'?vSettingsReminders():(parts[1]==='display'?vSettingsDisplay():vSettings()));break;
+      case 'backup':h=vSettingsBackup();break;
       case 'extras':h=parts[1]==='diet'?vExtrasDiet():(parts[1]==='contacts'?vExtrasContacts():vExtras());break;
       case 'journal':h=vJournal();break;
       case 'notes-file':h=vNotesFile();break;
