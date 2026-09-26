@@ -801,7 +801,7 @@ PRACTICE.surya={
 };
 
 const MK=(h,t,notes)=>({k:'card',h,t,notes:notes||[]});
-const DHAUTI='Holding the Chin Mudra, blow out hot gases through your mouth with a quick swish and bend. Before your head touches down, all air should be blown out. Hold for 2 seconds, lift your head and body a little, then inhale.';
+const DHAUTI='Holding the Chin Mudra, blow out all air through your mouth with a quick swish and bend. Before your head touches down, all air should be blown out. Hold for 2 seconds, lift your head and body a little, then inhale.';
 PRACTICE.shakti={
   title:'Shakti Chalana',sub:'Complete cycle in Vajrasana',
   secs:[
@@ -1741,6 +1741,13 @@ function vHome(){
   const ps=liveParams(),dd=(db.days[t]||{}).t||{},done=ps.filter(p=>dd[p.id]!==undefined).length;
   const bn=[];
   if(!storageOK)bn.push('<div class="banner warn"><p><b>Saving is unavailable</b> in this browser, so entries last only while this page stays open. Export your journal from Backup.</p></div>');
+
+  const remindersSet = db && db.meta && db.meta.remindersSet === true;
+  const seenReminderBanner = db && db.meta && db.meta.seenReminderBanner === true;
+  if (!remindersSet && !seenReminderBanner) {
+    bn.push(banner(IC.bell, '<b>Set practice reminders</b> to stay consistent with your daily sadhana.', 'Set Reminder', 'settings/reminders', null, 'dismissReminderCard'));
+  }
+
   if(mins>=20*60+30&&nAns===0)bn.push(banner(IC.bell,'<b>Evening reflection</b> is waiting.','Open','params'));
   if(now.getDay()===0&&mins>=21*60){const wr=db.weeks[wkStart(t)];if(!wr||!Object.keys(wr.a||{}).length)bn.push(banner(IC.bell,'<b>Weekly reflection</b> is ready for you.','Open','','weeklyNow'))}
   const ur=unseenReview();
@@ -2132,6 +2139,11 @@ function isIOSDevice(){
 function handleAddCal(remId, e){
   const rem = REMINDERS.find(r => r.id === remId);
   if(!rem) return;
+
+  db.meta = db.meta || {};
+  db.meta.remindersSet = true;
+  db.meta.seenReminderBanner = true;
+  touch();
 
   if(isIOSDevice()){
     if(e) e.preventDefault();
@@ -2769,6 +2781,12 @@ function doImport(text){
 }
 
 const ACT={
+  dismissReminderCard(){
+    db.meta=db.meta||{};
+    db.meta.seenReminderBanner=true;
+    touch();
+    render();
+  },
   dismissBackup(){
     db.meta=db.meta||{};
     db.meta.lastDismissedBackup=nowISO();
@@ -2853,6 +2871,10 @@ const ACT={
     handleAddCal(a.dataset.id, e);
   },
   addCalAll(){
+    db.meta = db.meta || {};
+    db.meta.remindersSet = true;
+    db.meta.seenReminderBanner = true;
+    touch();
     const ics=buildICS();
     downloadICS(ics);
     toast('Calendar file downloaded — open to save all reminders');

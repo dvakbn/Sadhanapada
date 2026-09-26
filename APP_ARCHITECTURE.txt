@@ -1,0 +1,85 @@
+================================================================================
+ SADHANAPADA APP - ARCHITECTURE & REPLICATION GUIDE
+================================================================================
+
+1. WHAT THIS APP IS
+--------------------------------------------------------------------------------
+Sadhanapada App is a 100% private, offline-first Progressive Web App (PWA)
+designed for sadhakas. Key features include:
+  • Daily & weekly practice parameter tracking with instant state saving.
+  • Personal date-wise diary and notes journal.
+  • Guided audio session player with background audio & wake lock support.
+  • Step-by-step practice instructions (Yogasana, Angamardhana, etc.).
+  • Real-time animated sun/moon day-night sky hero section.
+  • Location-accurate astronomical calculations (Sunrise, Sunset, Lunar Tithi).
+  • Contacts & bus schedules directory and Yogic Diet PDF viewer.
+  • One-click native iOS and Android calendar integration (.ics).
+  • Direct background auto-saving to local text files (Parameters & Notes).
+
+
+2. HOW IT IS BUILT (TECH STACK & FRAMEWORK)
+--------------------------------------------------------------------------------
+The app is engineered with a Zero-Framework Architecture for maximum speed,
+simplicity, longevity, and offline reliability.
+
+• Core Language:
+  - Pure HTML5, CSS3, and Vanilla JavaScript (ES6+).
+  - Built primarily inside a single entry point: `index.html`.
+
+• Single Page Application (SPA) Router:
+  - Lightweight Hash-based routing (`location.hash` e.g., `#/home`, `#/settings`).
+  - Zero external npm routing libraries required.
+
+• Offline & Local Data Persistence:
+  - HTML5 `localStorage` for immediate JSON state storage (`db` object).
+  - IndexedDB for storing `FileSystemFileHandle` references.
+  - Web File System Access API (`showSaveFilePicker` / `createWritable`) for
+    direct background auto-saving and overwriting local `.txt` backup files.
+  - Service Worker (`sw.js`) and Web App Manifest (`manifest.webmanifest`) for
+    100% offline functionality and home screen installation on iOS & Android.
+
+• UI, Animations & Astronomical Graphics:
+  - Dynamic CSS Variables (`--bg`, `--paper`, `--ink`, `--amber`, etc.) supporting
+    light mode and dark mode with automatic system detection.
+  - Pure CSS Keyframe animations for gentle card hover states and wandering starfields.
+  - Procedural SVG Generation (`skySVG()`) using quadratic Bezier solar trajectories
+    and SVG Gaussian blur filters (`feGaussianBlur`).
+  - NOAA Astronomical Algorithms for calculating direct local sunrise, sunset,
+    and Vedic Lunar Tithi angles for any city worldwide.
+
+
+3. HOW TO REPLICATE THIS FRAMEWORK FOR A DIFFERENT PURPOSE
+--------------------------------------------------------------------------------
+If you want to build a similar app for a different domain (e.g. habit tracker,
+workout log, medical journal, study planner, or inventory logger):
+
+Step 1: Create a Single `index.html` File
+  Combine your markup, CSS styles, and JavaScript logic inside one file.
+  This ensures zero build steps, instant loading, and simple hosting on GitHub
+  Pages, Netlify, or local file storage.
+
+Step 2: Define Centralized State & Persistence
+  Create a global state object `db = { meta: {}, entries: {} }`.
+  Write `load()`, `touch()`, and `flush()` helper functions to JSON-serialize
+  state into `localStorage` on every user action.
+
+Step 3: Implement Hash-Based View Router
+  Use a simple `render()` function triggered by `window.onhashchange`:
+    function parseHash() { return location.hash.replace(/^#\/?/, '') || 'home'; }
+    function render() {
+      const route = parseHash();
+      // Render view HTML based on route...
+      document.getElementById('view').innerHTML = html;
+    }
+
+Step 4: Enable File Auto-Save & Export
+  Provide plain text export functions (`buildTXT()`) and use the File System
+  Access API (`showSaveFilePicker`) to let users bind a local file for
+  automatic background overwriting whenever changes occur.
+
+Step 5: Add Offline PWA Support
+  Include a minimal `manifest.webmanifest` and register a `sw.js` Service Worker
+  that caches `./index.html` and core static assets so the app works without
+  an internet connection.
+
+================================================================================
