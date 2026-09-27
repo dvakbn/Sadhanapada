@@ -552,6 +552,7 @@ const IC={
   eye:S('<path d="M2.500 12S6 6 12 6s9.500 6 9.500 6-3.500 6-9.500 6-9.500-6-9.500-6z"/><circle cx="12" cy="12" r="2.500"/>'),
   upload:S('<path d="M12 16V5M7.500 9.500L12 5l4.500 4.500M5 19.500h14"/>'),
   bell:S('<path d="M6 16.500V11a6 6 0 0 1 12 0v5.500l1.500 1.500h-15zM10 20.500a2 2 0 0 0 4 0"/>'),
+  flame:'<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor"><path d="M12 2c0 0-5 3.5-5 8a5 5 0 0 0 10 0c0-4.5-5-8-5-8zm0 11a2 2 0 0 1-2-2c0-1.5 1.5-3 2-3.5.5.5 2 2 2 3.5a2 2 0 0 1-2 2z"/></svg>',
   search:S('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>'),
   audio:S('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
   sparkles:S('<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8zM19 15l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1zM5 16l.8 1.8L7.5 18.5l-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z"/>'),
@@ -1694,7 +1695,7 @@ function getSunMoonData(date = new Date(), lat = 11.0, lon = 76.9, timeZone = nu
 function getSunMoonWidget(){
   const showLunar = db.meta.showLunar !== false;
   const showSun = db.meta.showSunTime !== false;
-  if (!showLunar && !showSun) return '';
+  const streak = getStreakData();
 
   const loc = (db.meta && db.meta.loc) || {};
   const lat = loc.lat || 11.0;
@@ -1704,6 +1705,10 @@ function getSunMoonWidget(){
 
   const sm = getSunMoonData(new Date(), lat, lon, timeZone, utcOffset);
   const items = [];
+
+  if (streak.current > 0) {
+    items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.flame+'</span><span style="line-height:1"><b>'+streak.current+'</b> '+(streak.current === 1 ? 'day' : 'days')+' streak</span></span>');
+  }
   if (showLunar && sm.tithi) {
     items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.cHalf+'</span><span style="line-height:1"><b>'+esc(sm.tithi)+'</b></span></span>');
   }
@@ -1711,6 +1716,7 @@ function getSunMoonWidget(){
     items.push('<span style="display:inline-flex;align-items:center;gap:6px"><span class="ic" style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:var(--amber)">'+IC.sun+'</span><span style="line-height:1"><b>'+esc(sm.sunrise)+'</b> &nbsp;·&nbsp; <b>'+esc(sm.sunset)+'</b></span></span>');
   }
 
+  if (!items.length) return '';
   return '<div class="sky-info-strip" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px;font-size:13.5px;color:var(--ink2);line-height:1">'+items.join('<span style="opacity:0.4;margin:0 2px">•</span>')+'</div>';
 }
 
@@ -1733,6 +1739,46 @@ function initLocationData(){
   }).catch(()=>{});
 }
 
+function getStreakData(){
+  const keys = Object.keys((db && db.days) || {}).filter(k => /^\d{4}-\d\d-\d\d$/.test(k) && hasData(k)).sort();
+  if (!keys.length) return { current: 0, longest: 0, activeDates: [] };
+
+  let longest = 0;
+  let currentChain = 0;
+  let prevDate = null;
+
+  keys.forEach(k => {
+    if (!prevDate) {
+      currentChain = 1;
+    } else {
+      const diff = Math.round((pk(k) - pk(prevDate)) / 864e5);
+      if (diff === 1) {
+        currentChain++;
+      } else if (diff > 1) {
+        currentChain = 1;
+      }
+    }
+    prevDate = k;
+    if (currentChain > longest) longest = currentChain;
+  });
+
+  const t = today();
+  const y = addD(t, -1);
+  const activeSet = new Set(keys);
+
+  let current = 0;
+  let checkDate = activeSet.has(t) ? t : (activeSet.has(y) ? y : null);
+
+  if (checkDate) {
+    while (activeSet.has(checkDate)) {
+      current++;
+      checkDate = addD(checkDate, -1);
+    }
+  }
+
+  return { current, longest, activeDates: keys };
+}
+
 /* ============ home ============ */
 function vHome(){
   const now=new Date(),hr=now.getHours(),mins=hr*60+now.getMinutes(),t=today();
@@ -1748,8 +1794,19 @@ function vHome(){
     bn.push(banner(IC.bell, '<b>Set practice reminders</b> to stay consistent with your daily sadhana.', 'Set Reminder', 'settings/reminders', null, 'dismissReminderCard'));
   }
 
-  if(mins>=20*60+30&&nAns===0)bn.push(banner(IC.bell,'<b>Evening reflection</b> is waiting.','Open','params'));
-  if(now.getDay()===0&&mins>=21*60){const wr=db.weeks[wkStart(t)];if(!wr||!Object.keys(wr.a||{}).length)bn.push(banner(IC.bell,'<b>Weekly reflection</b> is ready for you.','Open','','weeklyNow'))}
+  const dismissedEveningToday = db && db.meta && db.meta.dismissedEveningReflection === t;
+  if(mins>=20*60+30 && nAns===0 && !dismissedEveningToday) {
+    bn.push(banner(IC.bell, '<b>Evening reflection</b> is waiting.', 'Open', 'params', null, 'dismissEveningReflection'));
+  }
+
+  const currentWk = wkStart(t);
+  const dismissedWeeklyThisWk = db && db.meta && db.meta.dismissedWeeklyReflection === currentWk;
+  if(now.getDay()===0 && mins>=21*60 && !dismissedWeeklyThisWk) {
+    const wr = db.weeks[currentWk];
+    if(!wr || !Object.keys(wr.a||{}).length) {
+      bn.push(banner(IC.bell, '<b>Weekly reflection</b> is ready for you.', 'Open', '', 'weeklyNow', 'dismissWeeklyReflection'));
+    }
+  }
   const ur=unseenReview();
   if(ur)bn.push(banner(IC.chart,'Your <b>'+(ur.kind==='w'?'weekly':'monthly')+' review</b> for '+esc(reviewTitle(ur.kind,ur.start))+' is ready.','Read','review/'+ur.kind+'/'+ur.start));
   const nDays=Object.keys(db.days).filter(hasData).length;
@@ -2039,6 +2096,27 @@ function applySearch(q){
 
 /* ============ reviews ============ */
 function vReviews(){
+  const streak = getStreakData();
+  const streakCard = '<div class="card" style="margin-top:12px;margin-bottom:18px;background:linear-gradient(135deg, var(--paper) 0%, var(--t-amber) 100%);border:1px solid var(--line);padding:16px 18px">' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
+      '<span class="ric ic" style="color:var(--amber);background:var(--paper);border:1px solid var(--amber);width:38px;height:38px">' + IC.flame + '</span>' +
+      '<div>' +
+        '<b style="font:400 19px/1.2 var(--serif);color:var(--ink)">Sadhana Streak & Consistency</b>' +
+        '<small style="display:block;color:var(--ink2);font-size:13px;margin-top:2px">Continuous logging progress</small>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--paper);border:1px solid var(--line2);border-radius:14px;padding:12px 14px;text-align:center">' +
+      '<div>' +
+        '<small style="color:var(--ink3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;font-weight:700">Active Streak</small>' +
+        '<div style="font:400 22px/1.2 var(--serif);color:var(--amber);margin-top:2px"><b>' + streak.current + '</b> <span style="font-size:13px;font-family:var(--sans);font-weight:600;color:var(--ink2)">' + plural(streak.current, 'day') + '</span></div>' +
+      '</div>' +
+      '<div style="border-left:1px solid var(--line2)">' +
+        '<small style="color:var(--ink3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;font-weight:700">Longest Streak</small>' +
+        '<div style="font:400 22px/1.2 var(--serif);color:var(--hi);margin-top:2px"><b>' + streak.longest + '</b> <span style="font-size:13px;font-family:var(--sans);font-weight:600;color:var(--ink2)">' + plural(streak.longest, 'day') + '</span></div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
   const mk=(kind,cap)=>reviewStarts(kind).slice(0,cap).map(s=>{
     const end=periodOf(kind,s).end,ready=reviewReady(end),n=ctxFor(kind,s).active.length,seen=db.meta.seen[kind+':'+s];
     const pill=!ready?'<span class="pill live">In progress</span>':(seen||n<2?'':'<span class="pill new">New</span>');
@@ -2046,7 +2124,8 @@ function vReviews(){
   }).join('');
   const w=mk('w',52),m=mk('m',24);
   return hdr('Reviews')+'<main class="pg"><p class="muted small" style="margin-top:6px">Weekly reviews are ready each Sunday at 9:30 PM and monthly reviews on the last day of the month at 9:30 PM. They are built only from what you have recorded.</p>'+
-    '<h2 class="subh" style="border:0;padding-top:0;margin-top:20px">Weekly</h2><div class="rlist">'+(w||'<p class="muted small">Your first review will appear once you record something.</p>')+'</div>'+
+    streakCard+
+    '<h2 class="subh" style="border:0;padding-top:0;margin-top:14px">Weekly</h2><div class="rlist">'+(w||'<p class="muted small">Your first review will appear once you record something.</p>')+'</div>'+
     '<h2 class="subh" style="border:0;padding-top:0">Monthly</h2><div class="rlist">'+(m||'<p class="muted small">Nothing yet.</p>')+'</div></main>';
 }
 function vReview(kind,start){
@@ -2781,6 +2860,18 @@ function doImport(text){
 }
 
 const ACT={
+  dismissEveningReflection(){
+    db.meta = db.meta || {};
+    db.meta.dismissedEveningReflection = today();
+    touch();
+    render();
+  },
+  dismissWeeklyReflection(){
+    db.meta = db.meta || {};
+    db.meta.dismissedWeeklyReflection = wkStart(today());
+    touch();
+    render();
+  },
   dismissReminderCard(){
     db.meta=db.meta||{};
     db.meta.seenReminderBanner=true;
