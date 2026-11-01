@@ -288,14 +288,16 @@ $$;
 
 -- Do not leave SECURITY DEFINER RPCs executable by PUBLIC by default.
 revoke execute on function public.device_invite_codes_enabled() from public;
-revoke execute on function public.validate_invite_code(text) from public;
+revoke execute on function public.validate_invite_code(text) from public, anon, authenticated;
 revoke execute on function public.request_device_access(text, text, text, text) from public;
 revoke execute on function public.touch_device_seen() from public;
-grant execute on function public.device_invite_codes_enabled() to anon, authenticated;
+grant execute on function public.device_invite_codes_enabled() to anon;
+revoke execute on function public.device_invite_codes_enabled() from authenticated;
 -- Invite validation is intentionally not exposed as a public oracle; it is called
 -- internally by request_device_access(), which is SECURITY DEFINER.
 grant execute on function public.request_device_access(text, text, text, text) to anon;
-grant execute on function public.touch_device_seen() to anon, authenticated;
+grant execute on function public.touch_device_seen() to anon;
+revoke execute on function public.touch_device_seen() from authenticated;
 
 -- Automatically stamp the first approval time. The admin UI only updates status.
 create or replace function private.set_device_approved_at()
