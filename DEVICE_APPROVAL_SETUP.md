@@ -87,9 +87,17 @@ The included `netlify.toml` already contains the build command and publish direc
 
 The included `vercel.json` sets these build values.
 
-### GitHub Pages note
+### GitHub Pages
 
-GitHub Pages does not run this Node build step or inject environment variables. Use Netlify or Vercel for this setup, or add a carefully configured GitHub Actions deployment workflow that supplies the public variables during build. Do not commit `supabase-config.js`.
+This branch includes a static `supabase-config.js` containing only the public anon key and a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+1. In GitHub, open repository Settings → Pages.
+2. Under Build and deployment → Source, select **GitHub Actions**.
+3. Merge this feature branch into `main` when you are ready to publish, or run the workflow manually from Actions while this branch is selected.
+4. The workflow publishes the repository root. The app URL will be `https://dvakbn.github.io/Sadhanapada/`; the admin page will be `https://dvakbn.github.io/Sadhanapada/admin/`.
+
+The checked-in `supabase-config.js` contains only the public project URL and anon key. This key is designed to be public; database access must be enforced by RLS. Never add the service-role or secret key to GitHub.
+
 
 ## 6. Local build
 
