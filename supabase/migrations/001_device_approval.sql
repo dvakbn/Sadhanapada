@@ -296,6 +296,7 @@ revoke execute on function public.device_invite_codes_enabled() from authenticat
 -- Invite validation is intentionally not exposed as a public oracle; it is called
 -- internally by request_device_access(), which is SECURITY DEFINER.
 grant execute on function public.request_device_access(text, text, text, text) to anon;
+revoke execute on function public.request_device_access(text, text, text, text) from authenticated;
 grant execute on function public.touch_device_seen() to anon;
 revoke execute on function public.touch_device_seen() from authenticated;
 
