@@ -3,6 +3,7 @@ name: Deploy Sadhanapada to GitHub Pages
 on:
   push:
     branches:
+      - main
       - feature/device-approval
   workflow_dispatch:
 
