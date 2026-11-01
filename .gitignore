@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+supabase-config.js
+node_modules/
+.vercel/
+.netlify/
+.DS_Store
