@@ -3183,15 +3183,28 @@ function deviceSetError(id, message) {
   el.textContent = message || '';
   el.hidden = !message;
 }
+function readDeviceTokenCookie() {
+  const prefix = DEVICE_TOKEN_KEY + '=';
+  const item = document.cookie.split('; ').find(part => part.startsWith(prefix));
+  return item ? decodeURIComponent(item.slice(prefix.length)) : '';
+}
+function writeDeviceTokenCookie(token) {
+  // A first-party cookie is a fallback if browser storage is cleared or unavailable.
+  document.cookie = DEVICE_TOKEN_KEY + '=' + encodeURIComponent(token) + '; Max-Age=31536000; Path=/; SameSite=Lax; Secure';
+}
 function makeDeviceToken() {
   let token = '';
   try { token = localStorage.getItem(DEVICE_TOKEN_KEY) || ''; } catch (e) {}
   if (!/^[0-9a-f]{32}$/i.test(token)) {
+    try { token = readDeviceTokenCookie(); } catch (e) {}
+  }
+  if (!/^[0-9a-f]{32}$/i.test(token)) {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
     token = Array.from(bytes, b => b.toString(16).padStart(2,'0')).join('');
-    localStorage.setItem(DEVICE_TOKEN_KEY, token);
   }
+  try { localStorage.setItem(DEVICE_TOKEN_KEY, token); } catch (e) {}
+  try { writeDeviceTokenCookie(token); } catch (e) {}
   return token;
 }
 async function sha256Hex(value) {
@@ -3227,17 +3240,13 @@ function denyDevice(status) {
 }
 async function readOwnDevice() {
   if (!deviceClient || !deviceTokenHash) throw new Error('Access service is not configured.');
-  const { error: touchError } = await deviceClient.rpc('touch_device_seen');
-  if (touchError && !/function|schema cache|not found/i.test(touchError.message || '')) {
-    console.warn('Device heartbeat update failed:', touchError.message);
-  }
-  const { data, error } = await deviceClient
-    .from('devices')
-    .select('id,name,status,created_at,last_seen_at,request_count,approved_at')
-    .eq('token_hash', deviceTokenHash)
-    .maybeSingle();
+  // Use a single narrowly scoped RPC for the token's status. This avoids relying
+  // on PostgREST forwarding x-client-info exactly as expected on every browser.
+  const { data, error } = await deviceClient.rpc('get_device_access_status', {
+    p_token_hash: deviceTokenHash
+  });
   if (error) throw error;
-  return data;
+  return Array.isArray(data) ? data[0] : data;
 }
 async function checkDeviceStatus() {
   try {
