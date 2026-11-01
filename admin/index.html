@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#182427">
+  <title>Sadhanapada · Device Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#10191b;--panel:#192528;--panel2:#202f32;--ink:#edf2ec;--muted:#a7b7b0;--line:#344649;--accent:#c5d7c6;--danger:#e29a93;--good:#a8d4b5}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#223236 0%,var(--bg) 62%);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{width:min(100% - 32px,920px);margin:0 auto;padding:38px 0 70px}.brand{font:400 26px Georgia,serif}.kicker{font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin:5px 0 28px}
+    h1{font:400 26px Georgia,serif;margin:0 0 9px}h2{font:400 21px Georgia,serif;margin:0}.muted{color:var(--muted)}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 10px 35px #0002}
+    label{display:block;margin:14px 0 6px;font-size:13px;font-weight:650}input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+    button{font:inherit;cursor:pointer}.primary,.action{border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--panel2);color:var(--ink);font-weight:650}.primary{background:var(--accent);color:#14201a;border:0;width:100%;margin-top:16px}.action.approve{color:var(--good)}.action.reject,.action.revoke{color:var(--danger)}
+    .error{color:var(--danger);margin-top:12px}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.tab{padding:9px 14px;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--muted)}.tab[aria-selected=true]{background:var(--accent);color:#14201a;border-color:var(--accent)}
+    .count{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 6px;margin-left:5px;border-radius:999px;background:#3d5353;color:#fff;font-size:11px}
+    .device{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0}.device-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.device-name{font-weight:750;font-size:17px}.status{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+    .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px;margin:14px 0}.meta div{font-size:13px;color:var(--muted)}.meta b{display:block;color:var(--ink);font-size:12px;font-weight:650;margin-bottom:2px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.hidden{display:none!important}.empty{padding:35px 10px;text-align:center;color:var(--muted)}.small{font-size:12px}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">Sadhanapada</div><div class="kicker">Device administration</div>
+  <section id="login-panel" class="panel">
+    <h1>Admin sign in</h1><p class="muted">Sign in with the Supabase Auth account added to the admins allow-list.</p>
+    <form id="login-form">
+      <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+      <button class="primary" id="login-button" type="submit">Sign in</button>
+    </form>
+    <div id="login-error" class="error" role="alert"></div>
+  </section>
+  <section id="dashboard" class="hidden">
+    <div class="toolbar"><div><h1>Device requests</h1><div id="signed-in-as" class="muted small"></div></div><button id="logout" class="action">Sign out</button></div>
+    <nav class="tabs" aria-label="Device status">
+      <button class="tab" data-status="pending" aria-selected="true">Pending <span class="count" id="pending-count">0</span></button>
+      <button class="tab" data-status="approved" aria-selected="false">Approved</button>
+      <button class="tab" data-status="rejected" aria-selected="false">Rejected</button>
+      <button class="tab" data-status="revoked" aria-selected="false">Revoked</button>
+    </nav>
+    <div id="refresh-note" class="muted small">Refreshing every 15 seconds</div>
+    <div id="devices-list" aria-live="polite"></div>
+    <div id="dashboard-error" class="error" role="alert"></div>
+  </section>
+</main>
+<script>
+(() => {
+  const cfg = window.SUPABASE_CONFIG;
+  const loginPanel = document.getElementById('login-panel');
+  const dashboard = document.getElementById('dashboard');
+  const loginError = document.getElementById('login-error');
+  const list = document.getElementById('devices-list');
+  const dashboardError = document.getElementById('dashboard-error');
+  if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase) {
+    loginError.textContent = 'Supabase configuration is missing. Set SUPABASE_URL and SUPABASE_ANON_KEY in the hosting provider and redeploy.';
+    document.getElementById('login-button').disabled = true;
+    return;
+  }
+  const client = window.supabase.createClient(cfg.url, cfg.anonKey);
+  let activeStatus = 'pending';
+  let refreshTimer = null;
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const timeInIndia = value => value ? new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
+  function parseAgent(ua) {
+    ua = ua || '';
+    let browser = 'Unknown browser';
+    if (/Edg\//.test(ua)) browser = 'Microsoft Edge';
+    else if (/OPR\//.test(ua)) browser = 'Opera';
+    else if (/SamsungBrowser\//.test(ua)) browser = 'Samsung Internet';
+    else if (/CriOS\//.test(ua)) browser = 'Chrome (iOS)';
+    else if (/FxiOS\//.test(ua)) browser = 'Firefox (iOS)';
+    else if (/Firefox\//.test(ua)) browser = 'Firefox';
+    else if (/Chrome\//.test(ua)) browser = 'Chrome';
+    else if (/Safari\//.test(ua)) browser = 'Safari';
+    let os = 'Unknown OS';
+    if (/Android/.test(ua)) os = 'Android';
+    else if (/(iPhone|iPad|iPod)/.test(ua)) os = 'iOS/iPadOS';
+    else if (/Windows NT/.test(ua)) os = 'Windows';
+    else if (/Mac OS X/.test(ua)) os = 'macOS';
+    else if (/CrOS/.test(ua)) os = 'ChromeOS';
+    else if (/Linux/.test(ua)) os = 'Linux';
+    return {browser,os};
+  }
+  function showLogin(message='') {
+    loginPanel.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+    loginError.textContent = message;
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  async function verifyAdmin(user) {
+    const {data,error} = await client.from('admins').select('user_id,email').eq('user_id',user.id).maybeSingle();
+    if (error || !data) {
+      await client.auth.signOut();
+      showLogin('This account is not authorized as a Sadhanapada administrator.');
+      return false;
+    }
+    document.getElementById('signed-in-as').textContent = data.email || user.email || '';
+    loginPanel.classList.add('hidden');
+    dashboard.classList.remove('hidden');
+    await loadDevices();
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(loadDevices,15000);
+    return true;
+  }
+  async function loadDevices() {
+    dashboardError.textContent = '';
+    const {data,error} = await client.from('devices')
+      .select('id,name,user_agent,invite_code_used,status,created_at,last_seen_at,request_count,approved_at')
+      .eq('status',activeStatus)
+      .order('created_at',{ascending:false});
+    if (error) {
+      dashboardError.textContent = error.message;
+      return;
+    }
+    const {count,error:countError} = await client.from('devices').select('id',{count:'exact',head:true}).eq('status','pending');
+    if (!countError) document.getElementById('pending-count').textContent = String(count || 0);
+    const rows = data || [];
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty">No '+escapeHtml(activeStatus)+' devices.</div>';
+      return;
+    }
+    list.innerHTML = rows.map(row => {
+      const agent = parseAgent(row.user_agent);
+      let actions = '';
+      if (activeStatus === 'pending') actions = '<button class="action approve" data-action="approved" data-id="'+escapeHtml(row.id)+'">Approve</button><button class="action reject" data-action="rejected" data-id="'+escapeHtml(row.id)+'">Reject</button>';
+      if (activeStatus === 'approved') actions = '<button class="action revoke" data-action="revoked" data-id="'+escapeHtml(row.id)+'">Revoke</button>';
+      return '<article class="device"><div class="device-head"><div class="device-name">'+escapeHtml(row.name)+'</div><div class="status">'+escapeHtml(row.status)+'</div></div>'+
+        '<div class="meta"><div><b>Browser</b>'+escapeHtml(agent.browser)+'</div><div><b>Operating system</b>'+escapeHtml(agent.os)+'</div>'+
+        '<div><b>Requested</b>'+escapeHtml(timeInIndia(row.created_at))+'</div><div><b>Request count</b>'+escapeHtml(row.request_count)+'</div>'+
+        '<div><b>Invite code</b>'+escapeHtml(row.invite_code_used || 'Not used')+'</div><div><b>Last seen</b>'+escapeHtml(timeInIndia(row.last_seen_at))+'</div>'+
+        (row.approved_at ? '<div><b>Approved at</b>'+escapeHtml(timeInIndia(row.approved_at))+'</div>' : '')+
+        '</div><div class="small muted">'+escapeHtml(row.user_agent || 'User agent unavailable')+'</div>'+
+        (actions ? '<div class="actions">'+actions+'</div>' : '')+'</article>';
+    }).join('');
+  }
+  document.getElementById('login-form').addEventListener('submit',async event => {
+    event.preventDefault();
+    const button = document.getElementById('login-button');
+    button.disabled = true; button.textContent = 'Signing in…'; loginError.textContent = '';
+    const {data,error} = await client.auth.signInWithPassword({
+      email:document.getElementById('email').value.trim(),
+      password:document.getElementById('password').value
+    });
+    button.disabled = false; button.textContent = 'Sign in';
+    if (error) { loginError.textContent = error.message; return; }
+    await verifyAdmin(data.user);
+  });
+  document.querySelectorAll('[data-status]').forEach(button => {
+    button.addEventListener('click',() => {
+      activeStatus = button.dataset.status;
+      document.querySelectorAll('[data-status]').forEach(tab => tab.setAttribute('aria-selected',String(tab === button)));
+      loadDevices();
+    });
+  });
+  list.addEventListener('click',async event => {
+    const button = event.target.closest('[data-action][data-id]');
+    if (!button) return;
+    const nextStatus = button.dataset.action;
+    if (!['approved','rejected','revoked'].includes(nextStatus)) return;
+    if (nextStatus === 'revoked' && !confirm('Revoke access for this device?')) return;
+    button.disabled = true;
+    const {error} = await client.from('devices').update({status:nextStatus}).eq('id',button.dataset.id);
+    if (error) dashboardError.textContent = error.message;
+    await loadDevices();
+  });
+  document.getElementById('logout').addEventListener('click',async () => {
+    await client.auth.signOut();
+    showLogin();
+  });
+  (async () => {
+    const {data:{session}} = await client.auth.getSession();
+    if (!session) return showLogin();
+    await verifyAdmin(session.user);
+  })();
+})();
+</script>
+</body>
+</html>
