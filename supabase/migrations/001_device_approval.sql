@@ -94,7 +94,7 @@ as $$
 $$;
 
 grant execute on function private.request_device_token_hash() to anon, authenticated;
-grant execute on function private.is_admin() to authenticated;
+grant execute on function private.is_admin() to anon, authenticated;
 grant execute on function private.is_approved_device() to anon, authenticated;
 
 -- Admins can read only their own allow-list row. No client can add itself as an admin.
@@ -292,7 +292,8 @@ revoke execute on function public.validate_invite_code(text) from public;
 revoke execute on function public.request_device_access(text, text, text, text) from public;
 revoke execute on function public.touch_device_seen() from public;
 grant execute on function public.device_invite_codes_enabled() to anon, authenticated;
-grant execute on function public.validate_invite_code(text) to anon, authenticated;
+-- Invite validation is intentionally not exposed as a public oracle; it is called
+-- internally by request_device_access(), which is SECURITY DEFINER.
 grant execute on function public.request_device_access(text, text, text, text) to anon;
 grant execute on function public.touch_device_seen() to anon, authenticated;
 
