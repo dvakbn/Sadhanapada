@@ -3208,6 +3208,7 @@ async function enterApprovedApp() {
   devicePollTimer = null;
   deviceScreen('da-loading');
   document.body.classList.add('device-approved');
+  document.getElementById('device-access').hidden = true;
   init();
   startAppServiceWorker();
   if (deviceHeartbeatTimer) clearInterval(deviceHeartbeatTimer);
