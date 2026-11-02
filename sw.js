@@ -1,6 +1,6 @@
 /* Sadhanapada service worker: cache only the app's public static shell. */
 const CACHE='sadhanapada-v10-static-only-security';
-const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./Guided_Yogasanas.mp3','./ANGAMARDHANA.png','./PRACTICES GUIDANCE.png','./SHAKTI CHALANA.png','./SURYA KRIYA.png','./YOGASANA.png'];
+const CORE=['./','./index.html','./manifest.webmanifest','./supabase-config.js','./icon-192.png','./icon-512.png','./Guided_Yogasanas.mp3','./ANGAMARDHANA.png','./PRACTICES GUIDANCE.png','./SHAKTI CHALANA.png','./SURYA KRIYA.png','./YOGASANA.png'];
 const CACHE_PATHS=new Set(CORE.map(path=>new URL(path,self.registration.scope).pathname));
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
