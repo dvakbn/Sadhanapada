@@ -1300,20 +1300,55 @@ function importText(text){
   const o=JSON.parse(line.slice(jsonStart));
   if(!o||typeof o!=='object'||typeof o.days!=='object')throw new Error('The restore data looks damaged.');
   let nd=0,nw=0,np=0;
-  (o.params||[]).forEach(p=>{if(p&&p.id&&p.name&&!P(p.id)){db.params.push(p);np++}});
+  (o.params||[]).forEach(p=>{
+    if(!p||typeof p!=='object')return;
+    const id=typeof p.id==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(p.id)?p.id:uid();
+    const name=typeof p.name==='string'?p.name.trim().slice(0,60):'';
+    const type=Object.prototype.hasOwnProperty.call(TYPES,p.type)?p.type:null;
+    if(!name||!type||P(id))return;
+    const clean={id,name,type,time:typeof p.time==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(p.time)?p.time:'',unit:typeof p.unit==='string'?p.unit.slice(0,20):'',dir:['more','less','track'].includes(p.dir)?p.dir:'more',archived:p.archived===true,c:typeof p.c==='string'&&/^\d{4}-\d\d-\d\d$/.test(p.c)?p.c:today()};
+    if(type==='symbol'){
+      const source=Array.isArray(p.sym)?p.sym.slice(0,5):SYMSETS.circles.opts;
+      clean.sym=source.map((item,i)=>({i:item&&typeof item.i==='string'&&Object.prototype.hasOwnProperty.call(IC,item.i)?item.i:undefined,g:item&&typeof item.g==='string'?item.g.slice(0,8):'',l:item&&typeof item.l==='string'?item.l.slice(0,24):'',s:item&&Number.isFinite(Number(item.s))?Math.max(0,Math.min(1,Number(item.s))):1-i/Math.max(1,source.length-1)}));
+    }
+    db.params.push(clean);np++;
+  });
+  const cleanAnswers=raw=>{
+    const out={};
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+    Object.entries(raw).forEach(([qid,value])=>{
+      if(!Object.prototype.hasOwnProperty.call(QBYID,qid)||!value||typeof value!=='object'||typeof value.t!=='string')return;
+      out[qid]={t:value.t.slice(0,20000),at:typeof value.at==='string'&&!isNaN(Date.parse(value.at))?value.at:nowISO()};
+    });
+    return out;
+  };
+  const cleanTracking=raw=>{
+    const out={};
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+    Object.entries(raw).forEach(([id,value])=>{
+      const p=P(id);if(!p)return;
+      let valid=false;
+      if(p.type==='check'||p.type==='star')valid=typeof value==='boolean';
+      else if(p.type==='mood')valid=['h','n','s'].includes(value);
+      else if(p.type==='rating')valid=Number.isInteger(value)&&value>=1&&value<=5;
+      else if(p.type==='count')valid=Number.isFinite(value)&&value>=0&&value<=1000000;
+      else if(p.type==='symbol')valid=Number.isInteger(value)&&value>=0&&value<(p.sym||[]).length;
+      if(valid)out[id]=value;
+    });
+    return out;
+  };
   Object.keys(o.days||{}).forEach(k=>{
-    const inc=o.days[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
-    inc.t=inc.t||{};inc.a=inc.a||{};
+    const inc=o.days[k];if(!inc||typeof inc!=='object'||Array.isArray(inc)||!/^\d{4}-\d\d-\d\d$/.test(k))return;
+    const clean={t:cleanTracking(inc.t),a:cleanAnswers(inc.a),n:inc.n&&typeof inc.n==='object'&&typeof inc.n.t==='string'?{t:inc.n.t.slice(0,20000),at:typeof inc.n.at==='string'&&!isNaN(Date.parse(inc.n.at))?inc.n.at:nowISO()}:null,u:typeof inc.u==='string'&&!isNaN(Date.parse(inc.u))?inc.u:nowISO()};
     const cur=db.days[k];
-    if(!cur||(inc.u||'')>(cur.u||'')){db.days[k]=inc;nd++}
+    if(!cur||(clean.u||'')>(cur.u||'')){db.days[k]=clean;nd++}
   });
   Object.keys(o.weeks||{}).forEach(k=>{
-    const inc=o.weeks[k];if(!inc||typeof inc!=='object'||!/^\d{4}-\d\d-\d\d$/.test(k))return;
-    inc.a=inc.a||{};
+    const inc=o.weeks[k];if(!inc||typeof inc!=='object'||Array.isArray(inc)||!/^\d{4}-\d\d-\d\d$/.test(k))return;
+    const clean={a:cleanAnswers(inc.a),u:typeof inc.u==='string'&&!isNaN(Date.parse(inc.u))?inc.u:nowISO()};
     const cur=db.weeks[k];
-    if(!cur||(inc.u||'')>(cur.u||'')){db.weeks[k]=inc;nw++}
+    if(!cur||(clean.u||'')>(cur.u||'')){db.weeks[k]=clean;nw++}
   });
-  if(o.created&&o.created<db.created)db.created=o.created;
   touch();flush();
   return {nd,nw,np};
 }
@@ -1951,7 +1986,7 @@ function vParams(){
 
 /* ============ tracker ============ */
 function ctl(p,v,k){
-  const d='data-p="'+p.id+'" data-k="'+k+'"';
+  const d='data-p="'+esc(p.id)+'" data-k="'+k+'"';
   switch(p.type){
     case 'check':return '<button class="tog '+(v?'on':'')+'" data-act="tog" '+d+' aria-pressed="'+(!!v)+'" aria-label="'+esc(p.name)+'">'+IC.check+'</button>';
     case 'star':return '<button class="tog star '+(v?'on':'')+'" data-act="tog" '+d+' aria-pressed="'+(!!v)+'" aria-label="'+esc(p.name)+'">'+(v?IC.starF:IC.star)+'</button>';
@@ -1978,7 +2013,7 @@ function tWeek(ps){
   ps.forEach(p=>{
     if(hasTime)g+='<div class="gt">'+(p.time?esc(fmtHM(p.time)).replace(' ','<br>'):'')+'</div>';
     g+='<div class="gn">'+esc(p.name)+'</div>';
-    days.forEach(k=>{const v=((db.days[k]||{}).t||{})[p.id];g+='<button class="cell '+(k>t?'fut':'')+'" data-act="cell" data-p="'+p.id+'" data-k="'+k+'" aria-label="'+esc(p.name+', '+fmtShort(k))+'">'+mark(p,v)+'</button>'});
+    days.forEach(k=>{const v=((db.days[k]||{}).t||{})[p.id];g+='<button class="cell '+(k>t?'fut':'')+'" data-act="cell" data-p="'+esc(p.id)+'" data-k="'+k+'" aria-label="'+esc(p.name+', '+fmtShort(k))+'">'+mark(p,v)+'</button>'});
   });
   g+='</div>';
   const notes=days.filter(k=>db.days[k]&&db.days[k].n&&db.days[k].n.t&&db.days[k].n.t.trim());
@@ -2018,13 +2053,13 @@ const typeLabel=p=>TYPES[p.type]+(p.type==='count'?(p.dir==='less'?', fewer is b
 function vManage(){
   const live=liveParams(),arch=db.params.filter(p=>p.archived);
   const row=(p,i)=>'<div class="mrow"><div class="mi"><b>'+esc(p.name)+'</b><small>'+esc(typeLabel(p))+(p.time?', '+esc(fmtHM(p.time)):'')+'</small></div>'+
-    '<button class="ib" data-act="mup" data-p="'+p.id+'" aria-label="Move up"'+(i===0?' disabled style="opacity:.25"':'')+'>'+IC.up+'</button>'+
-    '<button class="ib" data-act="mdown" data-p="'+p.id+'" aria-label="Move down"'+(i===live.length-1?' disabled style="opacity:.25"':'')+'>'+IC.down+'</button>'+
-    '<button class="ib" data-act="medit" data-p="'+p.id+'" aria-label="Edit">'+IC.edit+'</button>'+
-    '<button class="ib" data-act="march" data-p="'+p.id+'" aria-label="Remove">'+IC.trash+'</button></div>';
+    '<button class="ib" data-act="mup" data-p="'+esc(p.id)+'" aria-label="Move up"'+(i===0?' disabled style="opacity:.25"':'')+'>'+IC.up+'</button>'+
+    '<button class="ib" data-act="mdown" data-p="'+esc(p.id)+'" aria-label="Move down"'+(i===live.length-1?' disabled style="opacity:.25"':'')+'>'+IC.down+'</button>'+
+    '<button class="ib" data-act="medit" data-p="'+esc(p.id)+'" aria-label="Edit">'+IC.edit+'</button>'+
+    '<button class="ib" data-act="march" data-p="'+esc(p.id)+'" aria-label="Remove">'+IC.trash+'</button></div>';
   return hdr('Trackers',{back:'tracker'})+'<main class="pg"><p class="muted small" style="margin-top:6px">Removing a tracker only hides it. Everything you recorded stays in your history and journal.</p><div class="btns"><button class="btn pri" data-act="addP">'+IC.plus+' Add a tracker</button></div>'+
     (live.length?live.map(row).join(''):'<p class="muted small">Nothing here yet.</p>')+
-    (arch.length?'<h2 class="subh">Removed</h2>'+arch.map(p=>'<div class="mrow"><div class="mi"><b>'+esc(p.name)+'</b><small>'+esc(typeLabel(p))+'</small></div><button class="btn sm" data-act="mrest" data-p="'+p.id+'">Restore</button></div>').join(''):'')+'</main>';
+    (arch.length?'<h2 class="subh">Removed</h2>'+arch.map(p=>'<div class="mrow"><div class="mi"><b>'+esc(p.name)+'</b><small>'+esc(typeLabel(p))+'</small></div><button class="btn sm" data-act="mrest" data-p="'+esc(p.id)+'">Restore</button></div>').join(''):'')+'</main>';
 }
 const segs=s=>{try{if(window.Intl&&Intl.Segmenter)return Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(s),x=>x.segment).filter(x=>x.trim())}catch(e){}return Array.from(s.replace(/\s+/g,''))};
 function syncDraft(){
