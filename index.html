@@ -535,6 +535,8 @@ body:not(.device-approved)>:not(#device-access):not(#hero){display:none!importan
     <section id="da-denied" hidden>
       <h1 class="da-title">Access not granted</h1>
       <p class="da-copy" id="da-denied-copy">This device request was not approved. No app data is displayed.</p>
+      <p class="da-muted">If an administrator restores access, this page will update automatically.</p>
+      <button class="da-button" id="da-denied-retry" type="button">Check access now</button>
     </section>
     <section id="da-error-screen" hidden>
       <h1 class="da-title">Unable to verify access</h1>
@@ -3268,6 +3270,9 @@ function denyDevice(status) {
       ? 'Access to this device has been revoked. No app data is displayed.'
       : 'This device request was rejected. No app data is displayed.';
   deviceScreen('da-denied');
+  // Keep checking after rejection/revocation so an administrator can restore
+  // access later without requiring the user to clear storage or re-register.
+  devicePollTimer = setInterval(checkDeviceStatus, 10000);
 }
 async function readOwnDevice() {
   if (!deviceClient || !deviceTokenHash) throw new Error('Access service is not configured.');
@@ -3403,10 +3408,12 @@ document.getElementById('da-request-form').addEventListener('submit', async even
     button.textContent = 'Request access';
   }
 });
-document.getElementById('da-retry').addEventListener('click', () => {
+const retryDeviceStatus = () => {
   deviceScreen('da-loading');
   checkDeviceStatus();
-});
+};
+document.getElementById('da-retry').addEventListener('click', retryDeviceStatus);
+document.getElementById('da-denied-retry').addEventListener('click', retryDeviceStatus);
 startSplashAnimation();
 startDeviceApproval();
 
