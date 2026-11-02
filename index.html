@@ -60,7 +60,7 @@ svg{display:block}
 :focus-visible{outline:2px solid var(--stone);outline-offset:2px}
 
 /* ---------- hero ---------- */
-#hero{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;opacity:1;transition:opacity .8s ease,background .3s;pointer-events:auto}
+#hero{position:fixed;inset:0;z-index:100001;background:var(--bg);display:grid;place-items:center;opacity:1;transition:opacity .8s ease,background .3s;pointer-events:auto}
 #hero.out{opacity:0;pointer-events:none}
 #hero .hmark{position:absolute;width:min(66vw,360px);height:auto;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .7s ease,transform .9s var(--ease);filter:drop-shadow(0 2px 20px rgba(0,0,0,.16))}
 #hero.in .hmark{opacity:1;transform:none}
@@ -479,7 +479,7 @@ pre.jr{white-space:pre-wrap;word-break:break-word;font:400 13px/1.55 ui-monospac
 }
 
 /* ---------- approved-device gate ---------- */
-body:not(.device-approved)>:not(#device-access){display:none!important}
+body:not(.device-approved)>:not(#device-access):not(#hero){display:none!important}
 #device-access{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:22px;background:var(--bg,#DFE4DC);background-image:var(--grad-bg);color:var(--ink,#1A2526);font-family:var(--sans,system-ui,sans-serif)}
 #device-access[hidden]{display:none!important}
 .da-card{width:min(100%,440px);padding:30px 25px;border:1px solid var(--line,#B8C2B4);border-radius:22px;background:var(--paper,#F4F6F1);box-shadow:0 16px 50px rgba(0,0,0,.12)}
@@ -3146,10 +3146,6 @@ function init(){
   ui.route=parseHash();
   render(true);
   initLocationData();
-  const hero=$('#hero');
-  requestAnimationFrame(()=>hero.classList.add('in'));
-  setTimeout(()=>hero.classList.add('out'),1500);
-  setTimeout(()=>{if(hero.parentNode)hero.parentNode.removeChild(hero)},2500);
   try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(e){}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if(window.MutationObserver){
@@ -3293,6 +3289,17 @@ async function checkApprovedHeartbeat() {
     console.warn('Could not refresh device approval:', error);
   }
 }
+function startSplashAnimation() {
+  const hero = document.getElementById('hero');
+  if (!hero || hero.dataset.started === 'true') return;
+  hero.dataset.started = 'true';
+  requestAnimationFrame(() => hero.classList.add('in'));
+  // Run the one-second Gurukulam splash while the access check runs in parallel.
+  window.setTimeout(() => hero.classList.add('out'), 1000);
+  window.setTimeout(() => {
+    if (hero.parentNode) hero.parentNode.removeChild(hero);
+  }, 1800);
+}
 async function startDeviceApproval() {
   if (deviceGateStarted) return;
   deviceGateStarted = true;
@@ -3365,6 +3372,7 @@ document.getElementById('da-retry').addEventListener('click', () => {
   deviceScreen('da-loading');
   checkDeviceStatus();
 });
+startSplashAnimation();
 startDeviceApproval();
 
 </script>

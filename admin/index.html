@@ -38,11 +38,11 @@
     <div class="toolbar"><div><h1>Device requests</h1><div id="signed-in-as" class="muted small"></div></div><button id="logout" class="action">Sign out</button></div>
     <nav class="tabs" aria-label="Device status">
       <button class="tab" data-status="pending" aria-selected="true">Pending <span class="count" id="pending-count">0</span></button>
-      <button class="tab" data-status="approved" aria-selected="false">Approved</button>
-      <button class="tab" data-status="rejected" aria-selected="false">Rejected</button>
-      <button class="tab" data-status="revoked" aria-selected="false">Revoked</button>
+      <button class="tab" data-status="approved" aria-selected="false">Active <span class="count" id="approved-count">0</span></button>
+      <button class="tab" data-status="rejected" aria-selected="false">Rejected <span class="count" id="rejected-count">0</span></button>
+      <button class="tab" data-status="revoked" aria-selected="false">Revoked <span class="count" id="revoked-count">0</span></button>
     </nav>
-    <div id="refresh-note" class="muted small">Refreshing every 15 seconds</div>
+    <div id="refresh-note" class="muted small">Live updates · automatic refresh every 30 seconds</div>
     <div id="devices-list" aria-live="polite"></div>
     <div id="dashboard-error" class="error" role="alert"></div>
   </section>
@@ -63,6 +63,8 @@
   const client = window.supabase.createClient(cfg.url, cfg.anonKey);
   let activeStatus = 'pending';
   let refreshTimer = null;
+  let deviceChannel = null;
+  let loadSequence = 0;
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const timeInIndia = value => value ? new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
   function parseAgent(ua) {
@@ -91,6 +93,11 @@
     loginError.textContent = message;
     if (refreshTimer) clearInterval(refreshTimer);
     refreshTimer = null;
+    loadSequence++;
+    if (deviceChannel) {
+      client.removeChannel(deviceChannel);
+      deviceChannel = null;
+    }
   }
   async function verifyAdmin(user) {
     const {data,error} = await client.from('admins').select('user_id,email').eq('user_id',user.id).maybeSingle();
@@ -104,32 +111,42 @@
     dashboard.classList.remove('hidden');
     await loadDevices();
     if (refreshTimer) clearInterval(refreshTimer);
-    refreshTimer = setInterval(loadDevices,15000);
+    refreshTimer = setInterval(loadDevices,30000);
+    if (deviceChannel) client.removeChannel(deviceChannel);
+    deviceChannel = client.channel('sadhanapada-admin-devices')
+      .on('postgres_changes',{event:'*',schema:'public',table:'devices'},() => loadDevices())
+      .subscribe();
     return true;
   }
   async function loadDevices() {
+    const requestId = ++loadSequence;
+    const selectedStatus = activeStatus;
     dashboardError.textContent = '';
     const {data,error} = await client.from('devices')
       .select('id,name,user_agent,invite_code_used,status,created_at,last_seen_at,request_count,approved_at')
-      .eq('status',activeStatus)
       .order('created_at',{ascending:false});
+    // Ignore slow responses that belong to an older tab or refresh cycle.
+    if (requestId !== loadSequence || selectedStatus !== activeStatus) return;
     if (error) {
       dashboardError.textContent = error.message;
       return;
     }
-    const {count,error:countError} = await client.from('devices').select('id',{count:'exact',head:true}).eq('status','pending');
-    if (!countError) document.getElementById('pending-count').textContent = String(count || 0);
-    const rows = data || [];
+    const allRows = data || [];
+    for (const status of ['pending','approved','rejected','revoked']) {
+      const badge = document.getElementById(status+'-count');
+      if (badge) badge.textContent = String(allRows.filter(row => row.status === status).length);
+    }
+    const rows = allRows.filter(row => row.status === selectedStatus);
     if (!rows.length) {
-      list.innerHTML = '<div class="empty">No '+escapeHtml(activeStatus)+' devices.</div>';
+      list.innerHTML = '<div class="empty">No '+escapeHtml(selectedStatus)+' devices.</div>';
       return;
     }
     list.innerHTML = rows.map(row => {
       const agent = parseAgent(row.user_agent);
       let actions = '';
-      if (activeStatus === 'pending') actions = '<button class="action approve" data-action="approved" data-id="'+escapeHtml(row.id)+'">Approve</button><button class="action reject" data-action="rejected" data-id="'+escapeHtml(row.id)+'">Reject</button>';
-      if (activeStatus === 'approved') actions = '<button class="action revoke" data-action="revoked" data-id="'+escapeHtml(row.id)+'">Revoke</button>';
-      return '<article class="device"><div class="device-head"><div class="device-name">'+escapeHtml(row.name)+'</div><div class="status">'+escapeHtml(row.status)+'</div></div>'+
+      if (selectedStatus === 'pending') actions = '<button class="action approve" data-action="approved" data-id="'+escapeHtml(row.id)+'">Approve</button><button class="action reject" data-action="rejected" data-id="'+escapeHtml(row.id)+'">Reject</button>';
+      if (selectedStatus === 'approved') actions = '<button class="action revoke" data-action="revoked" data-id="'+escapeHtml(row.id)+'">Revoke</button>';
+      return '<article class="device"><div class="device-head"><div class="device-name">'+escapeHtml(row.name)+'</div><div class="status">'+escapeHtml(row.status === 'approved' ? 'ACTIVE' : row.status)+'</div></div>'+
         '<div class="meta"><div><b>Browser</b>'+escapeHtml(agent.browser)+'</div><div><b>Operating system</b>'+escapeHtml(agent.os)+'</div>'+
         '<div><b>Requested</b>'+escapeHtml(timeInIndia(row.created_at))+'</div><div><b>Request count</b>'+escapeHtml(row.request_count)+'</div>'+
         '<div><b>Invite code</b>'+escapeHtml(row.invite_code_used || 'Not used')+'</div><div><b>Last seen</b>'+escapeHtml(timeInIndia(row.last_seen_at))+'</div>'+

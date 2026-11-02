@@ -1,5 +1,5 @@
 /* Sadhanapada service worker: keeps the app working offline */
-const CACHE='sadhanapada-v8-persistent-device-approval';
+const CACHE='sadhanapada-v9-splash-admin-optimization';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./Guided_Yogasanas.mp3','./ANGAMARDHANA.png','./PRACTICES GUIDANCE.png','./SHAKTI CHALANA.png','./SURYA KRIYA.png','./YOGASANA.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));
