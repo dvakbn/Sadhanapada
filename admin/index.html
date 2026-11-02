@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#182427">
   <title>Sadhanapada · Device Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" crossorigin="anonymous"></script>
   <script src="../supabase-config.js"></script>
   <style>
     :root{color-scheme:dark;--bg:#10191b;--panel:#192528;--panel2:#202f32;--ink:#edf2ec;--muted:#a7b7b0;--line:#344649;--accent:#c5d7c6;--danger:#e29a93;--good:#a8d4b5}
@@ -144,8 +144,12 @@
     list.innerHTML = rows.map(row => {
       const agent = parseAgent(row.user_agent);
       let actions = '';
-      if (selectedStatus === 'pending') actions = '<button class="action approve" data-action="approved" data-id="'+escapeHtml(row.id)+'">Approve</button><button class="action reject" data-action="rejected" data-id="'+escapeHtml(row.id)+'">Reject</button>';
-      if (selectedStatus === 'approved') actions = '<button class="action revoke" data-action="revoked" data-id="'+escapeHtml(row.id)+'">Revoke</button>';
+      const actionButton = (status,label,kind='') => '<button class="action '+kind+'" data-action="'+status+'" data-current="'+escapeHtml(row.status)+'" data-id="'+escapeHtml(row.id)+'">'+label+'</button>';
+      if (row.status === 'pending') actions = actionButton('approved','Approve','approve')+actionButton('rejected','Reject','reject');
+      if (row.status === 'approved') actions = actionButton('rejected','Reject','reject')+actionButton('revoked','Revoke','revoke');
+      if (row.status === 'rejected' || row.status === 'revoked') {
+        actions = actionButton('approved','Approve again','approve')+actionButton('pending','Reopen request');
+      }
       return '<article class="device"><div class="device-head"><div class="device-name">'+escapeHtml(row.name)+'</div><div class="status">'+escapeHtml(row.status === 'approved' ? 'ACTIVE' : row.status)+'</div></div>'+
         '<div class="meta"><div><b>Browser</b>'+escapeHtml(agent.browser)+'</div><div><b>Operating system</b>'+escapeHtml(agent.os)+'</div>'+
         '<div><b>Requested</b>'+escapeHtml(timeInIndia(row.created_at))+'</div><div><b>Request count</b>'+escapeHtml(row.request_count)+'</div>'+
@@ -178,11 +182,18 @@
     const button = event.target.closest('[data-action][data-id]');
     if (!button) return;
     const nextStatus = button.dataset.action;
-    if (!['approved','rejected','revoked'].includes(nextStatus)) return;
-    if (nextStatus === 'revoked' && !confirm('Revoke access for this device?')) return;
+    const currentStatus = button.dataset.current;
+    if (!['pending','approved','rejected','revoked'].includes(nextStatus) ||
+        !['pending','approved','rejected','revoked'].includes(currentStatus) ||
+        nextStatus === currentStatus) return;
+    const labels = {pending:'reopen this request',approved:'approve access again',rejected:'reject this device',revoked:'revoke this device'};
+    if (!confirm('Are you sure you want to '+labels[nextStatus]+'?')) return;
     button.disabled = true;
-    const {error} = await client.from('devices').update({status:nextStatus}).eq('id',button.dataset.id);
+    dashboardError.textContent = '';
+    const {data,error} = await client.from('devices').update({status:nextStatus})
+      .eq('id',button.dataset.id).eq('status',currentStatus).select('id').maybeSingle();
     if (error) dashboardError.textContent = error.message;
+    else if (!data) dashboardError.textContent = 'This device changed in another session. The list has been refreshed.';
     await loadDevices();
   });
   document.getElementById('logout').addEventListener('click',async () => {
