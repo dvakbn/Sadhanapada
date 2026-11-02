@@ -60,9 +60,9 @@ svg{display:block}
 :focus-visible{outline:2px solid var(--stone);outline-offset:2px}
 
 /* ---------- hero ---------- */
-#hero{position:fixed;inset:0;z-index:100001;background:var(--bg);display:grid;place-items:center;opacity:1;transition:opacity .8s ease,background .3s;pointer-events:auto}
+#hero{position:fixed;inset:0;z-index:100001;background:var(--bg);display:grid;place-items:center;opacity:1;transition:opacity .3s ease,background .3s;pointer-events:auto}
 #hero.out{opacity:0;pointer-events:none}
-#hero .hmark{position:absolute;width:min(66vw,360px);height:auto;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .7s ease,transform .9s var(--ease);filter:drop-shadow(0 2px 20px rgba(0,0,0,.16))}
+#hero .hmark{position:absolute;width:min(66vw,360px);height:auto;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .35s ease,transform .4s var(--ease);filter:drop-shadow(0 2px 20px rgba(0,0,0,.16))}
 #hero.in .hmark{opacity:1;transform:none}
 #hero .hmark.dark{display:none}
 @media (prefers-color-scheme:dark){
@@ -3295,10 +3295,10 @@ function startSplashAnimation() {
   hero.dataset.started = 'true';
   requestAnimationFrame(() => hero.classList.add('in'));
   // Run the one-second Gurukulam splash while the access check runs in parallel.
-  window.setTimeout(() => hero.classList.add('out'), 1000);
+  window.setTimeout(() => hero.classList.add('out'), 700);
   window.setTimeout(() => {
     if (hero.parentNode) hero.parentNode.removeChild(hero);
-  }, 1800);
+  }, 1000);
 }
 async function startDeviceApproval() {
   if (deviceGateStarted) return;
