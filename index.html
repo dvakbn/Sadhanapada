@@ -1302,7 +1302,7 @@ function importText(text){
   const o=JSON.parse(line.slice(jsonStart));
   if(!o||typeof o!=='object'||typeof o.days!=='object')throw new Error('The restore data looks damaged.');
   let nd=0,nw=0,np=0;
-  (o.params||[]).forEach(p=>{
+  (Array.isArray(o.params)?o.params:[]).forEach(p=>{
     if(!p||typeof p!=='object')return;
     const id=typeof p.id==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(p.id)?p.id:uid();
     const name=typeof p.name==='string'?p.name.trim().slice(0,60):'';
@@ -1351,6 +1351,7 @@ function importText(text){
     const cur=db.weeks[k];
     if(!cur||(clean.u||'')>(cur.u||'')){db.weeks[k]=clean;nw++}
   });
+  if(typeof o.created==='string'&&!isNaN(Date.parse(o.created))&&o.created<db.created)db.created=o.created;
   touch();flush();
   return {nd,nw,np};
 }
